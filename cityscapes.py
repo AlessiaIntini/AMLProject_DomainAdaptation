@@ -34,7 +34,7 @@ class CityScapes(Dataset):
         self.imgs = {}
         imgnames = []
         impth = osp.join('/content/Cityscapes/Cityspaces', 'images', mode)
-        folders = os.listdir('/content/Cityscapes/Cityspaces/images/train')
+        folders = os.listdir(impth)
         for fd in folders:
             fdpth = osp.join(impth, fd)
             im_names = os.listdir(fdpth)
@@ -46,8 +46,8 @@ class CityScapes(Dataset):
         ## parse gt directory
         self.labels = {}
         gtnames = []
-        gtpth = osp.join(rootpth, 'gtFine', mode)
-        folders = os.listdir('/content/Cityscapes/Cityspaces/gtFine/train')
+        gtpth = osp.join('/content/Cityscapes/Cityspaces', 'gtFine', mode)
+        folders = os.listdir(gtpth)
         for fd in folders:
             fdpth = osp.join(gtpth, fd)
             lbnames = os.listdir(fdpth)
