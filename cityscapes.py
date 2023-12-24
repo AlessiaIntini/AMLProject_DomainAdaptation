@@ -34,7 +34,7 @@ class CityScapes(Dataset):
         self.imgs = {}
         imgnames = []
         impth = osp.join('/content/Cityscapes/Cityspaces', 'images', mode)
-        folders = os.listdir(impth)
+        folders = os.listdir('/content/Cityscapes/Cityspaces/images/train')
         for fd in folders:
             fdpth = osp.join(impth, fd)
             im_names = os.listdir(fdpth)
