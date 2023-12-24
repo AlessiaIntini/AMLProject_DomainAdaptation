@@ -38,10 +38,10 @@ class CityScapes(Dataset):
             tmp_path = osp.join(label_path,folder)
             for label in os.listdir(tmp_path):
                 self.label.append(osp.join(tmp_path,label))
-        print("Collected data: " + len(self.data)+" "+len(self.label))
+        print("Collected data: " + str(len(self.data))+" "+str(len(self.label)))
         if len(self.data) != len(self.label):
             
-            print("Error collecting data " + len(self.data)+" "+len(self.label))
+            print("Error collecting data " + str(len(self.data))+" "+str(len(self.label)))
             raise SystemExit('-1')
         
         self.transform = transforms
