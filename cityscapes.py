@@ -51,11 +51,12 @@ class CityScapes(Dataset):
     def __getitem__(self, idx):
 
         image = Image.open(self.data[idx]).convert('RGB')
-        label = Image.open(self.label[idx])
+        label = Image.open(self.label[idx]).convert('RGB')
 
         if self.transform is not None:
             image = self.transform(image)
             #label = self.transform(label)
+        print("\n"+str(len(label)))
         label = np.array(label).astype(np.int64)[np.newaxis, :]
         
         return  image,label
