@@ -32,12 +32,12 @@ class CityScapes(Dataset):
         for folder in os.listdir(image_path):
             tmp_path = osp.join(image_path,folder)
             for image in os.listdir(tmp_path):
-                self.data.add(Image.open(osp.join(tmp_path,image)).convert('RGB'))
+                self.data.append(Image.open(osp.join(tmp_path,image)).convert('RGB'))
 
         for folder in os.listdir(label_path):
             tmp_path = osp.join(label_path,folder)
             for label in os.listdir(tmp_path):
-                self.label.add(Image.open(osp.join(tmp_path,label)))
+                self.label.append(Image.open(osp.join(tmp_path,label)))
 
         if len(self.data) != len(self.label):
             print("Error collecting data")
