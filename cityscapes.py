@@ -33,7 +33,7 @@ class CityScapes(Dataset):
         ## parse img directory
         self.imgs = {}
         imgnames = []
-        impth = osp.join(rootpth, 'images', mode)
+        impth = osp.join('/content/AML_project_poliTO/Cityscapes/Cityspaces', 'images', mode)
         folders = os.listdir(impth)
         for fd in folders:
             fdpth = osp.join(impth, fd)
