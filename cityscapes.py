@@ -33,7 +33,7 @@ class CityScapes(Dataset):
         ## parse img directory
         self.imgs = {}
         imgnames = []
-        impth = osp.join(rootpth, 'leftImg8bit', mode)
+        impth = osp.join(rootpth, 'images', mode)
         folders = os.listdir(impth)
         for fd in folders:
             fdpth = osp.join(impth, fd)
@@ -113,7 +113,7 @@ class CityScapes(Dataset):
 
 if __name__ == "__main__":
     from tqdm import tqdm
-    ds = CityScapes('./data/', n_classes=19, mode='val')
+    ds = CityScapes('/content/AML_project_poliTO/Cityscapes/Cityspaces', n_classes=19, mode='val')
     uni = []
     for im, lb in tqdm(ds):
         lb_uni = np.unique(lb).tolist()
