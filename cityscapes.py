@@ -31,13 +31,15 @@ class CityScapes(Dataset):
 
         for folder in os.listdir(image_path):
             tmp_path = osp.join(image_path,folder)
+            tmp_label_path = osp.join(label_path,folder)
             for image in os.listdir(tmp_path):
                 self.data.append(osp.join(tmp_path,image))
+                self.label.append(osp.join(tmp_label_path,image.replace('_leftImg8bit','_gtFine_color')))
 
-        for folder in os.listdir(label_path):
-            tmp_path = osp.join(label_path,folder)
-            for label in os.listdir(tmp_path):
-                self.label.append(osp.join(tmp_path,label))
+        #for folder in os.listdir(label_path):
+        #    tmp_path = osp.join(label_path,folder)
+        #    for label in os.listdir(tmp_path):
+        #        self.label.append(osp.join(tmp_path,label))
         print("Collected data: " + str(len(self.data))+" "+str(len(self.label)))
         if len(self.data) != len(self.label):
             
