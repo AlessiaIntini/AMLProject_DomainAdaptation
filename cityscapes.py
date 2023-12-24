@@ -3,6 +3,7 @@
 import torch
 from torch.utils.data import Dataset
 import torchvision.transforms as transforms
+from torchvision.transforms import v2
 
 import os.path as osp
 import os
@@ -15,7 +16,7 @@ from transform import *
 
 
 class CityScapes(Dataset):
-    def __init__(self, mode, rootpath):
+    def __init__(self, mode, rootpath, transforms):
         super(CityScapes, self).__init__()
         assert mode in ('train', 'val', 'test', 'trainval')
         self.mode = mode
@@ -41,10 +42,17 @@ class CityScapes(Dataset):
         if len(self.data) != len(self.label):
             print("Error collecting data")
             exit()
-
+        
+        self.transform = transforms
 
     def __getitem__(self, idx):
-        return  self.data[idx],self.label[idx]
+
+        image = self.data[idx]
+        
+        if self.transform is not None:
+            image = self.transform(image)
+        
+        return  image,self.label[idx]
 
     def __len__(self):
         return len(self.data)
