@@ -32,12 +32,12 @@ class CityScapes(Dataset):
         for folder in os.listdir(image_path):
             tmp_path = osp.join(image_path,folder)
             for image in os.listdir(tmp_path):
-                self.data.append(Image.open(osp.join(tmp_path,image)).convert('RGB'))
+                self.data.append(osp.join(tmp_path,image))
 
         for folder in os.listdir(label_path):
             tmp_path = osp.join(label_path,folder)
             for label in os.listdir(tmp_path):
-                self.label.append(Image.open(osp.join(tmp_path,label)))
+                self.label.append(osp.join(tmp_path,label))
 
         if len(self.data) != len(self.label):
             print("Error collecting data")
@@ -47,12 +47,14 @@ class CityScapes(Dataset):
 
     def __getitem__(self, idx):
 
-        image = self.data[idx]
-        
+        image = Image.open(self.data[idx]).convert('RGB')
+        label = Image.open(self.label[idx])
+
         if self.transform is not None:
             image = self.transform(image)
+        label = np.array(label).astype(np.int64)[np.newaxis, :]
         
-        return  image,self.label[idx]
+        return  image,label
 
     def __len__(self):
         return len(self.data)
