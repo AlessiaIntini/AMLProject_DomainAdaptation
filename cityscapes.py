@@ -47,7 +47,7 @@ class CityScapes(Dataset):
         self.labels = {}
         gtnames = []
         gtpth = osp.join(rootpth, 'gtFine', mode)
-        folders = os.listdir(gtpth)
+        folders = os.listdir('/content/Cityscapes/Cityspaces/gtFine/train')
         for fd in folders:
             fdpth = osp.join(gtpth, fd)
             lbnames = os.listdir(fdpth)
