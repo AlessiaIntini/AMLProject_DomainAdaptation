@@ -56,7 +56,7 @@ class CityScapes(Dataset):
         if self.transform is not None:
             image = self.transform(image)
             label = self.transform(label)
-        label = np.array(label).astype(np.int64)[np.newaxis, :]
+        #label = np.array(label).astype(np.int64)[np.newaxis, :]
         
         return  image,label
 
