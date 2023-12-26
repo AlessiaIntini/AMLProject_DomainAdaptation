@@ -167,7 +167,7 @@ class CityScapes(Dataset):
         label = np.array(label).astype(np.int64)[np.newaxis, :]
 
         print("label size: ")
-        print(label.size())
+        print(len(label))
         #label = self.convert_labels(label)
         #print(label)
         return img, label
