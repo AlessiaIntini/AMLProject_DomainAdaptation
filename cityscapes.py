@@ -164,7 +164,7 @@ class CityScapes(Dataset):
             im_lb = self.trans_train(im_lb)
             img, label = im_lb['im'], im_lb['lb']
         img = self.to_tensor(img)
-        label = np.array(label).astype(np.int64)[np.newaxis, :]
+        #label = np.array(label).astype(np.int64)[np.newaxis, :]
 
         print("label size: ")
         print(len(label))
