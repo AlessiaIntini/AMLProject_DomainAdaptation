@@ -165,8 +165,9 @@ class CityScapes(Dataset):
             img, label = im_lb['im'], im_lb['lb']
         img = self.to_tensor(img)
         label = np.array(label).astype(np.int64)[np.newaxis, :]
-        #print(label)
-        #print(label.size())
+
+        print("label size: ")
+        print(label.size())
         #label = self.convert_labels(label)
         #print(label)
         return img, label
