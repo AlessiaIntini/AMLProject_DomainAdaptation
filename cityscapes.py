@@ -95,6 +95,7 @@ class CityScapes(Dataset):
             labels_info = json.load(fr)
         self.lb_map = {el['id']: el['trainId'] for el in labels_info}
         
+        print(self.lb_map)
 
         ## parse img directory
         self.imgs = {}
@@ -162,7 +163,10 @@ class CityScapes(Dataset):
             img, label = im_lb['im'], im_lb['lb']
         img = self.to_tensor(img)
         label = np.array(label).astype(np.int64)[np.newaxis, :]
+        print(label)
+        print(label.size())
         label = self.convert_labels(label)
+        print(label)
         return img, label
 
 
