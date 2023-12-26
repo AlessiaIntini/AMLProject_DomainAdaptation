@@ -155,6 +155,8 @@ class CityScapes(Dataset):
         fn  = self.imnames[idx]
         impth = self.imgs[fn]
         lbpth = self.labels[fn]
+        if idx > 3:
+            print(lbpth)
         img = Image.open(impth).convert('RGB')
         label = Image.open(lbpth)
         if self.mode == 'train' or self.mode == 'trainval':
