@@ -99,7 +99,7 @@ class CityScapes(Dataset):
         #self.lb_map = {el['id']: el['trainId'] for el in labels_info}
         
 
-        label_info = utils.get_label_info("./cityscapes_info.csv")
+        self.label_info = utils.get_label_info("./cityscapes_info.csv")
 
         #print(self.lb_map)
 
