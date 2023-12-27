@@ -173,7 +173,7 @@ class CityScapes(Dataset):
 
         print(label)
         print("###")
-        #label = np.array(label).astype(np.int64)[np.newaxis, :]
+        label = np.array(label).astype(np.int64)#[np.newaxis, :]
         label = utils.one_hot_it(label,self.label_info)
         print(label)
         #print("label size: ")
