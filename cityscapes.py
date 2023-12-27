@@ -158,8 +158,7 @@ class CityScapes(Dataset):
         
         img = Image.open(impth).convert('RGB')
         label = Image.open(lbpth)
-        img.show()
-        label.show()
+        
         if self.mode == 'train' or self.mode == 'trainval':
             im_lb = dict(im = img, lb = label)
             im_lb = self.trans_train(im_lb)
@@ -172,7 +171,7 @@ class CityScapes(Dataset):
         
         #print("label size: ")
         #print(len(label))
-        #label = self.convert_labels(label)
+        label = self.convert_labels(label)
         #print(label)
         return img, label
 
