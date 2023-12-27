@@ -171,12 +171,11 @@ class CityScapes(Dataset):
             img, label = im_lb['im'], im_lb['lb']
         img = self.to_tensor(img)
 
-        print(label)
-        print("###")
+      
         label = np.array(label).astype(np.int64)#[np.newaxis, :]
-        #label = utils.one_hot_it(label,self.label_info)
-        label = utils.one_hot_it_v11_dice(label,self.label_info)
-        print(label)
+
+        label = utils.one_hot_it_v11(label,self.label_info)
+    
         #print("label size: ")
         #print(len(label))
         #label = self.convert_labels(label)
