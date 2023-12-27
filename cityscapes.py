@@ -68,6 +68,7 @@ class CityScapes(Dataset):
 # -*- encoding: utf-8 -*-
 
 
+from ctypes import util
 import torch
 from torch.utils.data import Dataset
 import torchvision.transforms as transforms
@@ -77,6 +78,8 @@ import os
 from PIL import Image
 import numpy as np
 import json
+
+import utils
 
 from transform import *
 
@@ -91,10 +94,13 @@ class CityScapes(Dataset):
         print('self.mode', self.mode)
         self.ignore_lb = 255
 
-        with open('./cityscapes_info.json', 'r') as fr:
-            labels_info = json.load(fr)
-        self.lb_map = {el['id']: el['trainId'] for el in labels_info}
+        #with open('./cityscapes_info.json', 'r') as fr:
+        #    labels_info = json.load(fr)
+        #self.lb_map = {el['id']: el['trainId'] for el in labels_info}
         
+
+        label_info = utils.get_label_info("./cityscapes_info.csv")
+
         #print(self.lb_map)
 
         ## parse img directory
@@ -165,13 +171,14 @@ class CityScapes(Dataset):
             img, label = im_lb['im'], im_lb['lb']
         img = self.to_tensor(img)
 
-        print(np.array(label))
-
-        label = np.array(label).astype(np.int64)[np.newaxis, :]
-        
+        print(label)
+        print("###")
+        #label = np.array(label).astype(np.int64)[np.newaxis, :]
+        label = utils.one_hot_it(label,self.label_info)
+        print(label)
         #print("label size: ")
         #print(len(label))
-        label = self.convert_labels(label)
+        #label = self.convert_labels(label)
         #print(label)
         return img, label
 
