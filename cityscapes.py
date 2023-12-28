@@ -120,7 +120,6 @@ class CityScapes(Dataset):
         self.labels = {}
         gtnames = []
         gtpth = osp.join(rootpth, 'gtFine', mode)
-
         folders = os.listdir(gtpth)
         for fd in folders:
             fdpth = osp.join(gtpth, fd)
