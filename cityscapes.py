@@ -86,7 +86,7 @@ from transform import *
 
 
 class CityScapes(Dataset):
-    def __init__(self, rootpth, cropsize=(640, 480), mode='train', 
+    def __init__(self, rootpth, cropsize=(512, 1024), mode='train', 
     randomscale=(0.125, 0.25, 0.375, 0.5, 0.675, 0.75, 0.875, 1.0, 1.25, 1.5), *args, **kwargs):
         super(CityScapes, self).__init__(*args, **kwargs)
         assert mode in ('train', 'val', 'test', 'trainval')
