@@ -1,10 +1,9 @@
-#!/usr/bin/python
+"""#!/usr/bin/python
 # -*- encoding: utf-8 -*-
-
-
 import torch
 from torch.utils.data import Dataset
 import torchvision.transforms as transforms
+from torchvision.transforms import v2
 
 import os.path as osp
 import os
@@ -17,7 +16,77 @@ from transform import *
 
 
 class CityScapes(Dataset):
-    def __init__(self, rootpth, cropsize=(640, 480), mode='train', 
+    def __init__(self, mode, rootpath, transforms):
+        super(CityScapes, self).__init__()
+        assert mode in ('train', 'val', 'test', 'trainval')
+        self.mode = mode
+        print('self.mode', self.mode)
+        #self.ignore_lb = 255
+
+        self.data = []
+        self.label = []
+
+        image_path = osp.join(rootpath,"images",mode)
+        label_path = osp.join(rootpath,"gtFine",mode)
+
+        for folder in os.listdir(image_path):
+            tmp_path = osp.join(image_path,folder)
+            tmp_label_path = osp.join(label_path,folder)
+            for image in os.listdir(tmp_path):
+                self.data.append(osp.join(tmp_path,image))
+                self.label.append(osp.join(tmp_label_path,image.replace('_leftImg8bit','_gtFine_color')))
+
+        #for folder in os.listdir(label_path):
+        #    tmp_path = osp.join(label_path,folder)
+        #    for label in os.listdir(tmp_path):
+        #        self.label.append(osp.join(tmp_path,label))
+        print("Collected data: " + str(len(self.data))+" "+str(len(self.label)))
+        if len(self.data) != len(self.label):
+            
+            print("Error collecting data " + str(len(self.data))+" "+str(len(self.label)))
+            raise SystemExit('-1')
+        
+        self.transform = transforms
+
+    def __getitem__(self, idx):
+
+        image = Image.open(self.data[idx]).convert('RGB')
+        label = Image.open(self.label[idx]).convert('RGB')
+
+        if self.transform is not None:
+            image = self.transform(image)
+            label = self.transform(label)
+        #print("\n"+str(len(label)))
+        #label = np.array(label).astype(np.int64)[np.newaxis, :]
+        
+        return  image,label
+
+    def __len__(self):
+        return len(self.data)"""
+
+#!/usr/bin/python
+# -*- encoding: utf-8 -*-
+
+
+from ctypes import util
+import torch
+from torch.utils.data import Dataset
+import torchvision.transforms as transforms
+
+import os.path as osp
+import os
+from PIL import Image
+import numpy as np
+import json
+
+import utils
+
+from transform import *
+
+
+
+class CityScapes(Dataset):
+    def __init__(self, rootpth, cropsize=(512, 1024), mode='train', 
     randomscale=(0.125, 0.25, 0.375, 0.5, 0.675, 0.75, 0.875, 1.0, 1.25, 1.5), *args, **kwargs):
         super(CityScapes, self).__init__(*args, **kwargs)
         assert mode in ('train', 'val', 'test', 'trainval')
@@ -25,15 +94,19 @@ class CityScapes(Dataset):
         print('self.mode', self.mode)
         self.ignore_lb = 255
 
-        with open('./cityscapes_info.json', 'r') as fr:
-            labels_info = json.load(fr)
-        self.lb_map = {el['id']: el['trainId'] for el in labels_info}
+        #with open('./cityscapes_info.json', 'r') as fr:
+        #    labels_info = json.load(fr)
+        #self.lb_map = {el['id']: el['trainId'] for el in labels_info}
         
+
+        self.label_info = utils.get_label_info("./cityscapes_info.csv")
+
+        #print(self.lb_map)
 
         ## parse img directory
         self.imgs = {}
         imgnames = []
-        impth = osp.join('/content/Cityscapes/Cityspaces', 'images', mode)
+        impth = osp.join(rootpth, 'images', mode)
         folders = os.listdir(impth)
         for fd in folders:
             fdpth = osp.join(impth, fd)
@@ -46,13 +119,14 @@ class CityScapes(Dataset):
         ## parse gt directory
         self.labels = {}
         gtnames = []
-        gtpth = osp.join('/content/Cityscapes/Cityspaces', 'gtFine', mode)
+        gtpth = osp.join(rootpth, 'gtFine', mode)
+
         folders = os.listdir(gtpth)
         for fd in folders:
             fdpth = osp.join(gtpth, fd)
             lbnames = os.listdir(fdpth)
-            lbnames = [el for el in lbnames if 'labelIds' in el]
-            names = [el.replace('_gtFine_labelIds.png', '') for el in lbnames]
+            lbnames = [el for el in lbnames if 'color' in el]
+            names = [el.replace('_gtFine_color.png', '') for el in lbnames]
             lbpths = [osp.join(fdpth, el) for el in lbnames]
             gtnames.extend(names)
             self.labels.update(dict(zip(names, lbpths)))
@@ -88,15 +162,26 @@ class CityScapes(Dataset):
         fn  = self.imnames[idx]
         impth = self.imgs[fn]
         lbpth = self.labels[fn]
+        
         img = Image.open(impth).convert('RGB')
         label = Image.open(lbpth)
+        
         if self.mode == 'train' or self.mode == 'trainval':
             im_lb = dict(im = img, lb = label)
             im_lb = self.trans_train(im_lb)
             img, label = im_lb['im'], im_lb['lb']
         img = self.to_tensor(img)
+
         label = np.array(label).astype(np.int64)[np.newaxis, :]
-        label = self.convert_labels(label)
+        label = utils.one_hot_it(label,self.label_info)
+        
+
+        
+    
+        #print("label size: ")
+        #print(len(label))
+        #label = self.convert_labels(label)
+        #print(label)
         return img, label
 
 
@@ -111,12 +196,3 @@ class CityScapes(Dataset):
 
 
 
-if __name__ == "__main__":
-    from tqdm import tqdm
-    ds = CityScapes('/content/AML_project_poliTO/Cityscapes/Cityspaces', n_classes=19, mode='val')
-    uni = []
-    for im, lb in tqdm(ds):
-        lb_uni = np.unique(lb).tolist()
-        uni.extend(lb_uni)
-    print(uni)
-    print(set(uni))
