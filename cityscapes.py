@@ -163,7 +163,7 @@ class CityScapes(Dataset):
         lbpth = self.labels[fn]
         
         img = Image.open(impth).convert('RGB')
-        label = Image.open(lbpth).convert('RGB')
+        label = Image.open(lbpth)#.convert('RGB')
         
         if self.mode == 'train' or self.mode == 'trainval':
             im_lb = dict(im = img, lb = label)
@@ -173,7 +173,7 @@ class CityScapes(Dataset):
 
         label = np.array(label).astype(np.int64)[np.newaxis, :]
         label = utils.one_hot_it(label,self.label_info)
-        
+        #label = self.convert_labels(label)
 
         
     

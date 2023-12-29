@@ -29,7 +29,7 @@ def poly_lr_scheduler(optimizer, init_lr, iter, lr_decay_iter=1,
 
 def get_label_info(csv_path):
 	# return label -> {label_name: [r_value, g_value, b_value, ...}
-	ann = pd.read_csv(csv_path, sep=';')
+	ann = pd.read_csv(csv_path)
 	label = {}
 	for iter, row in ann.iterrows():
 		label_name = row['name']
@@ -45,20 +45,7 @@ def one_hot_it(label, label_info):
 	semantic_map = np.zeros(label.shape[:-1])
 	for index, info in enumerate(label_info):
 		color = label_info[info]
-		color_map = np.full((label.shape[0], label.shape[1], label.shape[2]), color, dtype=int)
-		equality = np.equal(label, color_map)
-		class_map = np.all(equality, axis=-1)
-		semantic_map[class_map] = index
-		semantic_map.append(class_map)
-	semantic_map = np.stack(semantic_map, axis=-1)
-	print(semantic_map) 
-	return semantic_map
-
-def one_hot_it_gta(label, label_info):
-	# return semantic_map -> [H, W]
-	semantic_map = np.zeros(label.shape[:-1])
-	for index, info in enumerate(label_info):
-		color = label_info[info]
+		print(color)
 		# colour_map = np.full((label.shape[0], label.shape[1], label.shape[2]), colour, dtype=int)
 		equality = np.equal(label, color)
 		class_map = np.all(equality, axis=-1)
@@ -66,6 +53,7 @@ def one_hot_it_gta(label, label_info):
 		# semantic_map.append(class_map)
 	# semantic_map = np.stack(semantic_map, axis=-1)
 	return semantic_map
+
 
 def one_hot_it_v11(label, label_info):
 	# return semantic_map -> [H, W, class_num]
@@ -75,18 +63,17 @@ def one_hot_it_v11(label, label_info):
 	for index, info in enumerate(label_info):
 		color = label_info[info][:3]
 		class_11 = label_info[info][3]
-		if class_11 != -1:
-			colour_map = np.full((label.shape[0], label.shape[1], label.shape[2]), color, dtype=int)
-			equality = np.equal(label, colour_map)
+		if class_11 == 1:
+			# colour_map = np.full((label.shape[0], label.shape[1], label.shape[2]), colour, dtype=int)
+			equality = np.equal(label, color)
 			class_map = np.all(equality, axis=-1)
-			semantic_map[class_map] = index
-			#semantic_map[class_map] = class_index
+			# semantic_map[class_map] = index
+			semantic_map[class_map] = class_index
 			class_index += 1
 		else:
 			equality = np.equal(label, color)
 			class_map = np.all(equality, axis=-1)
-			semantic_map[class_map] = -1
-	print(semantic_map)
+			semantic_map[class_map] = 11
 	return semantic_map
 
 def one_hot_it_v11_dice(label, label_info):
