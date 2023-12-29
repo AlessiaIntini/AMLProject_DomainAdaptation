@@ -94,8 +94,14 @@ class CityScapes(Dataset):
         print('self.mode', self.mode)
         self.ignore_lb = 255
 
+        #with open('./cityscapes_info.json', 'r') as fr:
+        #    labels_info = json.load(fr)
+        #self.lb_map = {el['id']: el['trainId'] for el in labels_info}
         
-        self.label_info = utils.get_label_info("./label.csv")
+
+        self.label_info = utils.get_label_info("./cityscapes_info.csv")
+
+        #print(self.lb_map)
 
         ## parse img directory
         self.imgs = {}
@@ -114,6 +120,7 @@ class CityScapes(Dataset):
         self.labels = {}
         gtnames = []
         gtpth = osp.join(rootpth, 'gtFine', mode)
+
         folders = os.listdir(gtpth)
         for fd in folders:
             fdpth = osp.join(gtpth, fd)
@@ -157,6 +164,7 @@ class CityScapes(Dataset):
         lbpth = self.labels[fn]
         
         img = Image.open(impth).convert('RGB')
+        #questo apre un immagine
         label = Image.open(lbpth)
         
         if self.mode == 'train' or self.mode == 'trainval':
@@ -183,16 +191,6 @@ class CityScapes(Dataset):
 
 
     def convert_labels(self, label):
-        for k, v in self.lb_map.items():
+        for k, v in self.label_info.items():
             label[label == k] = v
         return label
-
-if __name__ == "__main__":
-    from tqdm import tqdm
-    ds = CityScapes('./', n_classes=19, mode='val')
-    uni = []
-    for im, lb in tqdm(ds):
-        lb_uni = np.unique(lb).tolist()
-        uni.extend(lb_uni)
-    print(uni)
-    print(set(uni))
