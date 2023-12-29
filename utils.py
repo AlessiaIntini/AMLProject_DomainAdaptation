@@ -75,17 +75,17 @@ def one_hot_it_v11(label, label_info):
 	for index, info in enumerate(label_info):
 		color = label_info[info][:3]
 		class_11 = label_info[info][3]
-		if class_11 != 11:
-			# colour_map = np.full((label.shape[0], label.shape[1], label.shape[2]), colour, dtype=int)
-			equality = np.equal(label, color)
+		if class_11 != -1:
+			colour_map = np.full((label.shape[0], label.shape[1], label.shape[2]), color, dtype=int)
+			equality = np.equal(label, colour_map)
 			class_map = np.all(equality, axis=-1)
-			# semantic_map[class_map] = index
-			semantic_map[class_map] = class_index
+			semantic_map[class_map] = index
+			#semantic_map[class_map] = class_index
 			class_index += 1
 		else:
 			equality = np.equal(label, color)
 			class_map = np.all(equality, axis=-1)
-			semantic_map[class_map] = 11
+			semantic_map[class_map] = -1
 	print(semantic_map)
 	return semantic_map
 
