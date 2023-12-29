@@ -4,10 +4,13 @@ from collections import namedtuple
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from PIL import Image
-from utils import ExtResize, ExtToTensor, ExtTransforms , ExtCompose
+
 from torchvision.datasets.utils import iterable_to_str, verify_str_arg
 from torchvision.datasets.vision import VisionDataset
 import numpy as np
+import torchvision.transforms as transforms
+from transform import *
+
 
 class CityScapes(VisionDataset):
 
@@ -59,26 +62,35 @@ class CityScapes(VisionDataset):
     train_id_to_color = np.array(train_id_to_color)
     id_to_train_id = np.array([c.train_id for c in classes])
     id_to_color = np.array([c.color for c in classes])
+    
     def __init__(
         self,
         root: str = "dataset",
         split: str = "train",
         mode: str = "fine",
+        cropsize = (512, 1024),
         target_type: Union[List[str], str] = "semantic",
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
-        transforms: Optional[ExtTransforms] = None,
     ) -> None:
-        super().__init__(root, transforms, transform, target_transform)
+        super().__init__(root, transform, target_transform)
         print("root: ", root)
         self.mode = "gtFine" if mode == "fine" else "gtCoarse"
-        self.images_dir = os.path.join(self.root,"cityscapes","images",split)
-        self.targets_dir = os.path.join(self.root,"cityscapes", self.mode, split)
+        self.images_dir = os.path.join(self.root,"images",split)
+        self.targets_dir = os.path.join(self.root, self.mode, split)
         self.target_type = target_type
         self.split = split
         self.images = []
         self.targets = []
 
+        self.to_tensor = transforms.Compose([
+            transforms.ToTensor(),
+            ])
+
+
+        self.trans_train = Compose([
+            RandomCrop(cropsize)
+            ])
         verify_str_arg(mode, "mode", ("fine", "coarse"))
         if mode == "fine":
             valid_modes = ("train", "test", "val")
@@ -108,29 +120,22 @@ class CityScapes(VisionDataset):
 
                 self.images.append(os.path.join(img_dir, file_name))
                 self.targets.append(target_types)
-
-    @classmethod
-    def encode_target(cls, target):
-        return cls.id_to_train_id[np.array(target)]
-
-    @classmethod
-    def decode_target(cls, target):
-        target[target == 255] = 19
-        #target = target.astype('uint8') + 1
-        return cls.train_id_to_color[target]
+                
 
     def __getitem__(self, index: int) -> Tuple[Any, Any]:
 
         image = Image.open(self.images[index]).convert("RGB")
         target = Image.open(self.targets[index][0])
-        image , target = self.transforms(image,target)
+        #image , target = self.transforms(image,target)
         #image , target = ExtResize((512,1024))(image,target)
         #image , target = ExtToTensor()(image,target)
+        #image, target = self.trans_train((image,target))
+        image = self.to_tensor(image)
+        #target = np.array(target).astype(np.int64)[np.newaxis,:]
+        target = self.to_tensor(target)
+        
         return image, target
-
-    def __len__(self) -> int:
-        return len(self.images)
-
+    
     def _get_target_suffix(self, mode: str, target_type: str) -> str:
         if target_type == "instance":
             return f"{mode}_instanceIds.png"
@@ -140,143 +145,7 @@ class CityScapes(VisionDataset):
             return f"{mode}_color.png"
         else:
             return f"{mode}_polygons.json"
-
-    @classmethod 
-    def visualize_prediction(cls,outputs,labels) -> Tuple[Any, Any]:
-        preds = outputs.max(1)[1].detach().cpu().numpy()
-        lab = labels.detach().cpu().numpy()
-        colorized_preds = cls.decode_target(preds).astype('uint8') # To RGB images, (N, H, W, 3), ranged 0~255, numpy array
-        colorized_labels = cls.decode_target(lab).astype('uint8')
-        colorized_preds = Image.fromarray(colorized_preds[0]) # to PIL Image
-        colorized_labels = Image.fromarray(colorized_labels[0])
-        return colorized_preds , colorized_labels
-"""#!/usr/bin/python
-# -*- encoding: utf-8 -*-
-
-
-from ctypes import util
-import torch
-from torch.utils.data import Dataset
-import torchvision.transforms as transforms
-
-import os.path as osp
-import os
-from PIL import Image
-import numpy as np
-import json
-
-import utils
-
-from transform import *
-
-
-
-class CityScapes(Dataset):
-    def __init__(self, rootpth, cropsize=(512, 1024), mode='train', 
-    randomscale=(0.125, 0.25, 0.375, 0.5, 0.675, 0.75, 0.875, 1.0, 1.25, 1.5), *args, **kwargs):
-        super(CityScapes, self).__init__(*args, **kwargs)
-        assert mode in ('train', 'val', 'test', 'trainval')
-        self.mode = mode
-        print('self.mode', self.mode)
-        self.ignore_lb = 255
-
-        #with open('./cityscapes_info.json', 'r') as fr:
-        #    labels_info = json.load(fr)
-        #self.lb_map = {el['id']: el['trainId'] for el in labels_info}
-        
-
-        self.label_info = utils.get_label_info("./cityscapes_info.csv")
-
-        #print(self.lb_map)
-
-        ## parse img directory
-        self.imgs = {}
-        imgnames = []
-        impth = osp.join(rootpth, 'images', mode)
-        folders = os.listdir(impth)
-        for fd in folders:
-            fdpth = osp.join(impth, fd)
-            im_names = os.listdir(fdpth)
-            names = [el.replace('_leftImg8bit.png', '') for el in im_names]
-            impths = [osp.join(fdpth, el) for el in im_names]
-            imgnames.extend(names)
-            self.imgs.update(dict(zip(names, impths)))
-
-        ## parse gt directory
-        self.labels = {}
-        gtnames = []
-        gtpth = osp.join(rootpth, 'gtFine', mode)
-
-        folders = os.listdir(gtpth)
-        for fd in folders:
-            fdpth = osp.join(gtpth, fd)
-            lbnames = os.listdir(fdpth)
-            lbnames = [el for el in lbnames if 'color' in el]
-            names = [el.replace('_gtFine_color.png', '') for el in lbnames]
-            lbpths = [osp.join(fdpth, el) for el in lbnames]
-            gtnames.extend(names)
-            self.labels.update(dict(zip(names, lbpths)))
-
-        self.imnames = imgnames
-        self.len = len(self.imnames)
-        print('self.len', self.mode, self.len)
-        assert set(imgnames) == set(gtnames)
-        assert set(self.imnames) == set(self.imgs.keys())
-        assert set(self.imnames) == set(self.labels.keys())
-
-        ## pre-processing
-        self.to_tensor = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
-            ])
-        self.trans_train = Compose([
-            ColorJitter(
-                brightness = 0.5,
-                contrast = 0.5,
-                saturation = 0.5),
-            HorizontalFlip(),
-            # RandomScale((0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0)),
-            RandomScale(randomscale),
-            # RandomScale((0.125, 1)),
-            # RandomScale((0.125, 0.25, 0.375, 0.5, 0.675, 0.75, 0.875, 1.0)),
-            # RandomScale((0.125, 0.25, 0.375, 0.5, 0.675, 0.75, 0.875, 1.0, 1.125, 1.25, 1.375, 1.5)),
-            RandomCrop(cropsize)
-            ])
-
-
-    def __getitem__(self, idx):
-        fn  = self.imnames[idx]
-        impth = self.imgs[fn]
-        lbpth = self.labels[fn]
-        
-        img = Image.open(impth).convert('RGB')
-        #questo apre un immagine
-        label = Image.open(lbpth)
-        
-        if self.mode == 'train' or self.mode == 'trainval':
-            im_lb = dict(im = img, lb = label)
-            im_lb = self.trans_train(im_lb)
-            img, label = im_lb['im'], im_lb['lb']
-        img = self.to_tensor(img)
-
-        label = np.array(label).astype(np.int64)[np.newaxis, :]
-        label = utils.one_hot_it(label,self.label_info)
-        
-
         
     
-        #print("label size: ")
-        #print(len(label))
-        #label = self.convert_labels(label)
-        #print(label)
-        return img, label
-
-
-    def __len__(self):
-        return self.len
-
-
-    def convert_labels(self, label):
-        for k, v in self.label_info.items():
-            label[label == k] = v
-        return label"""
+    def __len__(self) -> int:
+        return len(self.images)
