@@ -86,6 +86,7 @@ def one_hot_it_v11(label, label_info):
 			equality = np.equal(label, color)
 			class_map = np.all(equality, axis=-1)
 			semantic_map[class_map] = 11
+	print(semantic_map)
 	return semantic_map
 
 def one_hot_it_v11_dice(label, label_info):
