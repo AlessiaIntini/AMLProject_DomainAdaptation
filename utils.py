@@ -51,7 +51,7 @@ def one_hot_it(label, label_info):
 		semantic_map[class_map] = index
 		# semantic_map.append(class_map)
 	# semantic_map = np.stack(semantic_map, axis=-1)
-	print(semantic_map)
+	print(semantic_map) 
 	return semantic_map
 
 def one_hot_it_gta(label, label_info):
