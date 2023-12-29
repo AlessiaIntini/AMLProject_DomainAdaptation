@@ -75,7 +75,7 @@ def one_hot_it_v11(label, label_info):
 	for index, info in enumerate(label_info):
 		color = label_info[info][:3]
 		class_11 = label_info[info][3]
-		if class_11 == 1:
+		if class_11 != 11:
 			# colour_map = np.full((label.shape[0], label.shape[1], label.shape[2]), colour, dtype=int)
 			equality = np.equal(label, color)
 			class_map = np.all(equality, axis=-1)
