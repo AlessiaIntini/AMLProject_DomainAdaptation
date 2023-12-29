@@ -29,7 +29,7 @@ def poly_lr_scheduler(optimizer, init_lr, iter, lr_decay_iter=1,
 
 def get_label_info(csv_path):
 	# return label -> {label_name: [r_value, g_value, b_value, ...}
-	ann = pd.read_csv(csv_path)
+	ann = pd.read_csv(csv_path, sep=';')
 	label = {}
 	for iter, row in ann.iterrows():
 		label_name = row['name']
@@ -45,13 +45,13 @@ def one_hot_it(label, label_info):
 	semantic_map = np.zeros(label.shape[:-1])
 	for index, info in enumerate(label_info):
 		color = label_info[info]
-		print(color)
 		# colour_map = np.full((label.shape[0], label.shape[1], label.shape[2]), colour, dtype=int)
 		equality = np.equal(label, color)
 		class_map = np.all(equality, axis=-1)
 		semantic_map[class_map] = index
 		# semantic_map.append(class_map)
 	# semantic_map = np.stack(semantic_map, axis=-1)
+	print("semantic_map",semantic_map)
 	return semantic_map
 
 
