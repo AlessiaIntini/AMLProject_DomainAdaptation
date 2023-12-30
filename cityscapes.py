@@ -61,7 +61,7 @@ class CityScapes(VisionDataset):
     id_to_color = np.array([c.color for c in classes])
     def __init__(
         self,
-        root: str = "dataset",
+        root: str = "/content/Cityscapes/Cityspaces",
         split: str = "train",
         mode: str = "fine",
         target_type: Union[List[str], str] = "semantic",
@@ -72,8 +72,8 @@ class CityScapes(VisionDataset):
         super().__init__(root, transforms, transform, target_transform)
         print("root: ", root)
         self.mode = "gtFine" if mode == "fine" else "gtCoarse"
-        self.images_dir = os.path.join(self.root,"cityscapes","images",split)
-        self.targets_dir = os.path.join(self.root,"cityscapes", self.mode, split)
+        self.images_dir = os.path.join(self.root,"images",split)
+        self.targets_dir = os.path.join(self.root, self.mode, split)
         self.target_type = target_type
         self.split = split
         self.images = []
