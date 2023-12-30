@@ -69,7 +69,7 @@ class CityScapes(VisionDataset):
         split: str = "train",
         mode: str = "fine",
         cropsize = (512, 1024),
-        target_type: Union[List[str], str] = "color",
+        target_type: Union[List[str], str] = "semantic",
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
     ) -> None:
@@ -86,14 +86,10 @@ class CityScapes(VisionDataset):
         self.to_tensor = transforms.Compose([
             v2.RandomResizedCrop(size=cropsize),
             transforms.ToTensor(),
-            transforms.Normalize((0, 0, 0), (255, 255, 255))
+            #transforms.Normalize((0, 0, 0), (255, 255, 255))
             ])
 
-        self.norm = transforms.Compose([
-            #v2.RandomResizedCrop(size=cropsize),
-            #transforms.ToTensor(),
-            transforms.Normalize((0, 0, 0), (255, 255, 255))
-            ])
+        
 
         self.trans_train = Compose([
             RandomCrop(cropsize)
@@ -132,7 +128,7 @@ class CityScapes(VisionDataset):
     def __getitem__(self, index: int) -> Tuple[Any, Any]:
 
         image = Image.open(self.images[index]).convert("RGB")
-        target = Image.open(self.targets[index][0]).convert("RGB")
+        target = Image.open(self.targets[index][0])
         #image , target = self.transforms(image,target)
         #image , target = ExtResize((512,1024))(image,target)
         #image , target = ExtToTensor()(image,target)
@@ -141,9 +137,9 @@ class CityScapes(VisionDataset):
         
 
         image = self.to_tensor(image)
-        #target = np.array(target).astype(np.int64)[np.newaxis,:]
+        
         target = self.to_tensor(target)
-        #target = self.norm()
+        
         return image, target
     
     def _get_target_suffix(self, mode: str, target_type: str) -> str:
