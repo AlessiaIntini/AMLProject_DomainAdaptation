@@ -27,7 +27,7 @@ def val(args, model, dataloader, writer = None , epoch = None, step = None):
         model.eval()
         precision_record = []
         hist = np.zeros((args.num_classes, args.num_classes))
-        random_sample = random.randint(0, len(dataloader) - 1)
+        #random_sample = random.randint(0, len(dataloader) - 1)
         for i, (data, label) in enumerate(dataloader):
             label = label.type(torch.LongTensor)
             data = data.cuda()
@@ -36,11 +36,11 @@ def val(args, model, dataloader, writer = None , epoch = None, step = None):
             # get RGB predict image
             predict, _, _ = model(data)
             
-            if i == random_sample and writer is not None:
-                colorized_predictions , colorized_labels = CityScapes.visualize_prediction(predict, label)
-                writer.add_image('eval%d/iter%d/predicted_eval_labels' % (epoch, i), np.array(colorized_predictions), step, dataformats='HWC')
-                writer.add_image('eval%d/iter%d/correct_eval_labels' % (epoch, i), np.array(colorized_labels), step, dataformats='HWC')
-                writer.add_image('eval%d/iter%d/eval_original _data' % (epoch, i), np.array(data[0].cpu(),dtype='uint8'), step, dataformats='CHW')
+            #if i == random_sample and writer is not None:
+            #    colorized_predictions , colorized_labels = CityScapes.visualize_prediction(predict, label)
+            #    writer.add_image('eval%d/iter%d/predicted_eval_labels' % (epoch, i), np.array(colorized_predictions), step, dataformats='HWC')
+            #    writer.add_image('eval%d/iter%d/correct_eval_labels' % (epoch, i), np.array(colorized_labels), step, dataformats='HWC')
+            #    writer.add_image('eval%d/iter%d/eval_original _data' % (epoch, i), np.array(data[0].cpu(),dtype='uint8'), step, dataformats='CHW')
 
             predict = predict.squeeze(0)
             predict = reverse_one_hot(predict)
