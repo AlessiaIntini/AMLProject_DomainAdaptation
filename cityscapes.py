@@ -10,7 +10,7 @@ from torchvision.datasets.vision import VisionDataset
 import numpy as np
 import torchvision.transforms as transforms
 from transform import *
-
+from torchvision.transforms import v2
 
 class CityScapes(VisionDataset):
 
@@ -84,7 +84,8 @@ class CityScapes(VisionDataset):
         self.targets = []
 
         self.to_tensor = transforms.Compose([
-            transforms.ToTensor(),
+            v2.RandomResizedCrop(size=cropsize),
+            transforms.ToTensor()
             ])
 
 

@@ -4,4 +4,11 @@
 /Lib
 /Scripts
 
+/share
+
+/runs
+
+/model/__pycache__
+/__pycache__
+
 pyvenv.cfg
