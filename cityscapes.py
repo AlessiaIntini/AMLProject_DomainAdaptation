@@ -86,7 +86,7 @@ class CityScapes(VisionDataset):
         self.to_tensor = transforms.Compose([
             v2.RandomResizedCrop(size=cropsize),
             transforms.ToTensor(),
-            #transforms.Normalize((0, 0, 0), (255, 255, 255))
+            transforms.Normalize((0, 0, 0), (255, 255, 255))
             ])
 
         self.norm = transforms.Compose([
@@ -143,7 +143,7 @@ class CityScapes(VisionDataset):
         image = self.to_tensor(image)
         #target = np.array(target).astype(np.int64)[np.newaxis,:]
         target = self.to_tensor(target)
-        target = self.norm()
+        #target = self.norm()
         return image, target
     
     def _get_target_suffix(self, mode: str, target_type: str) -> str:
