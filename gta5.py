@@ -89,44 +89,19 @@ class GTA5(VisionDataset):
             ])
 
 
-        self.trans_train = Compose([
-            RandomCrop(cropsize)
-            ])
-        verify_str_arg(mode, "mode", ("fine", "coarse"))
-        if mode == "fine":
-            valid_modes = ("train", "test", "val")
-        else:
-            valid_modes = ("train", "train_extra", "val")
-        msg = "Unknown value '{}' for argument split if mode is '{}'. Valid values are {{{}}}."
-        msg = msg.format(split, mode, iterable_to_str(valid_modes))
-        verify_str_arg(split, "split", valid_modes, msg)
+        
 
-        if not isinstance(target_type, list):
-            self.target_type = [target_type]
-        [
-            verify_str_arg(value, "target_type", ("instance", "semantic", "polygon", "color" ))
-            for value in self.target_type
-        ]
-
-        for city in os.listdir(self.images_dir):
-            img_dir = os.path.join(self.images_dir, city)
-            target_dir = os.path.join(self.targets_dir, city)
-            for file_name in os.listdir(img_dir):
-                target_types = []
-                for t in self.target_type:
-                    target_name = "{}_{}".format(
-                        file_name.split("_leftImg8bit")[0], self._get_target_suffix(self.mode, t)
-                    )
-                    target_types.append(os.path.join(target_dir, target_name))
-
-                self.images.append(os.path.join(img_dir, file_name))
-                self.targets.append(target_types)
+        
+        for file_name in os.listdir(self.images_dir):
+            
+            self.images.append(os.path.join(self.images_dir, file_name))
+            self.targets.append(os.path.join(self.targets_dir, file_name))
                 
 
     def __getitem__(self, index: int) -> Tuple[Any, Any]:
 
         image = Image.open(self.images[index]).convert("RGB")
-        target = Image.open(self.targets[index][0])
+        target = Image.open(self.targets[index])
         #image , target = self.transforms(image,target)
         #image , target = ExtResize((512,1024))(image,target)
         #image , target = ExtToTensor()(image,target)
