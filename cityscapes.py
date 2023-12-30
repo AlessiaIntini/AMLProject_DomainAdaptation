@@ -69,7 +69,7 @@ class CityScapes(VisionDataset):
         split: str = "train",
         mode: str = "fine",
         cropsize = (512, 1024),
-        target_type: Union[List[str], str] = "semantic",
+        target_type: Union[List[str], str] = "color",
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
     ) -> None:
@@ -131,9 +131,15 @@ class CityScapes(VisionDataset):
         #image , target = ExtResize((512,1024))(image,target)
         #image , target = ExtToTensor()(image,target)
         #image, target = self.trans_train((image,target))
-        image = self.to_tensor(image)
+
+        to_tensor = transforms.Compose([
+            v2.RandomResizedCrop(size=(512,1024)),
+            transforms.ToTensor()
+            ])
+
+        image = to_tensor(image)
         #target = np.array(target).astype(np.int64)[np.newaxis,:]
-        target = self.to_tensor(target)
+        #target = self.to_tensor(target)
         
         return image, target
     
