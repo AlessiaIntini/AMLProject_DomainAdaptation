@@ -260,13 +260,15 @@ def main():
     n_classes = args.num_classes
     args.dataset = args.dataset.upper()
     
+    transformations = ExtCompose([ExtResize((args.crop_height, args.crop_width)), ExtToTensor()]) #ExtRandomHorizontalFlip(),
+
     
+    #match args.data_transformations:
+    #    case 0:
+    #        transformations = ExtCompose([ExtResize((args.crop_height, args.crop_width)), ExtToTensor()]) #ExtRandomHorizontalFlip(),
+    #    case 1:
+    #        transformations = ExtCompose([ExtScale(random.choice([0.75,1,1.25,1.5,1.75,2]),interpolation=Image.Resampling.BILINEAR),ExtRandomCrop((args.crop_height, args.crop_width)), ExtToTensor()])
     
-    match args.data_transformations:
-        case 0:
-            transformations = ExtCompose([ExtResize((args.crop_height, args.crop_width)), ExtToTensor()]) #ExtRandomHorizontalFlip(),
-        case 1:
-            transformations = ExtCompose([ExtScale(random.choice([0.75,1,1.25,1.5,1.75,2]),interpolation=Image.Resampling.BILINEAR),ExtRandomCrop((args.crop_height, args.crop_width)), ExtToTensor()])
     eval_transformations = ExtCompose([ExtScale(0.5,interpolation=Image.Resampling.BICUBIC), ExtToTensor()])
     
     
