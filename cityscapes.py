@@ -132,14 +132,11 @@ class CityScapes(VisionDataset):
         #image , target = ExtToTensor()(image,target)
         #image, target = self.trans_train((image,target))
 
-        to_tensor = transforms.Compose([
-            v2.RandomResizedCrop(size=(512,1024)),
-            transforms.ToTensor()
-            ])
+        
 
-        image = to_tensor(image)
+        image = self.to_tensor(image)
         #target = np.array(target).astype(np.int64)[np.newaxis,:]
-        #target = self.to_tensor(target)
+        target = self.to_tensor(target)
         
         return image, target
     
