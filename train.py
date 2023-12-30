@@ -260,7 +260,7 @@ def main():
     n_classes = args.num_classes
     args.dataset = args.dataset.upper()
     
-    transformations = ExtCompose([ExtResize((args.crop_height, args.crop_width)), ExtToTensor()]) #ExtRandomHorizontalFlip(),
+    transformations = ExtCompose([ExtResize((512,1024)), ExtToTensor()]) #ExtRandomHorizontalFlip(),
 
     
     #match args.data_transformations:
