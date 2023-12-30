@@ -85,7 +85,8 @@ class CityScapes(VisionDataset):
 
         self.to_tensor = transforms.Compose([
             v2.RandomResizedCrop(size=cropsize),
-            transforms.ToTensor()
+            transforms.ToTensor(),
+            transforms.Normalize((0,), (255,))
             ])
 
 
