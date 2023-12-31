@@ -264,12 +264,12 @@ def main():
     
     cropsize = (512,1024)
 
-    #transformations = ExtCompose([ExtResize((512,1024)), ExtToTensor()]) #ExtRandomHorizontalFlip(),
+    transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()]) #ExtRandomHorizontalFlip(),
 
-    transformations = transforms.Compose([
-            transforms.Resize(cropsize),
-            transforms.ToTensor(),
-            ])
+    #transformations = transforms.Compose([
+    #        transforms.Resize(cropsize),
+    #        transforms.ToTensor(),
+    #        ])
     
     #match args.data_transformations:
     #    case 0:
