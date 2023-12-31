@@ -289,23 +289,23 @@ def main():
     
     start_epoch = 0
     
-
-    for check in os.listdir('./checkpoints'):
-        if 'latest_' in check:
-
-            start_epoch_tmp = int(check.split('_')[1].replace('.pth',''))
-
-            if start_epoch_tmp >= start_epoch:
-                start_epoch = start_epoch_tmp+1
-                pretrain_path = "checkpoints/"+check
-
-    #if args.resume and "latest_" in os.listdir("./checkpoints"):
-    #    model
-
-    if start_epoch > 0:
-        checkpoint = torch.load(pretrain_path)
-        model.module.load_state_dict(checkpoint['state_dict'])
-        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    if args.resume:
+        for check in os.listdir('./checkpoints'):
+            if 'latest_' in check:
+            
+                start_epoch_tmp = int(check.split('_')[1].replace('.pth',''))
+    
+                if start_epoch_tmp >= start_epoch:
+                    start_epoch = start_epoch_tmp+1
+                    pretrain_path = "checkpoints/"+check
+    
+        #if args.resume and "latest_" in os.listdir("./checkpoints"):
+        #    model
+    
+        if start_epoch > 0:
+            checkpoint = torch.load(pretrain_path)
+            model.module.load_state_dict(checkpoint['state_dict'])
+            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
 
     
