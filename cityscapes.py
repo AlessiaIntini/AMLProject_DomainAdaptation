@@ -65,11 +65,11 @@ class CityScapes(VisionDataset):
         split: str = "train",
         mode: str = "fine",
         target_type: Union[List[str], str] = "semantic",
-        transform: Optional[Callable] = None,
-        target_transform: Optional[Callable] = None,
+        #transform: Optional[Callable] = None,
+        #target_transform: Optional[Callable] = None,
         transforms: Optional[ExtTransforms] = None,
     ) -> None:
-        super().__init__(root, transforms, transform, target_transform)
+        super().__init__(root, transforms)#, transform, target_transform)
         print("root: ", root)
         self.mode = "gtFine" if mode == "fine" else "gtCoarse"
         self.images_dir = os.path.join(self.root,"images",split)
