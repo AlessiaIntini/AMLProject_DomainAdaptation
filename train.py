@@ -3,7 +3,7 @@
 from model.model_stages import BiSeNet
 from cityscapes import CityScapes
 #from GTA5 import GTA5
-import torchvision.transforms as trans
+import torchvision.transforms as transforms
 from torchvision.transforms import v2
 from utils import ExtCompose, ExtResize, ExtToTensor, ExtTransforms, ExtRandomHorizontalFlip , ExtScale , ExtRandomCrop
 import torch
@@ -262,10 +262,14 @@ def main():
     n_classes = args.num_classes
     args.dataset = args.dataset.upper()
     
+    cropsize = (512,1024)
 
+    #transformations = ExtCompose([ExtResize((512,1024)), ExtToTensor()]) #ExtRandomHorizontalFlip(),
 
-    transformations = ExtCompose([ExtResize((512,1024)), ExtToTensor()]) #ExtRandomHorizontalFlip(),
-
+    transformations = transforms.Compose([
+            transforms.Resize(cropsize),
+            transforms.ToTensor(),
+            ])
     
     #match args.data_transformations:
     #    case 0:
