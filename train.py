@@ -172,7 +172,7 @@ def parse_args():
                        help='Start counting epochs from this number')
     parse.add_argument('--checkpoint_step',
                        type=int,
-                       default=10,
+                       default=1,
                        help='How often to save checkpoints (epochs)')
     parse.add_argument('--validation_step',
                        type=int,
@@ -255,7 +255,7 @@ def main():
     
     print('training on CityScapes')
     train_dataset = CityScapes(split = 'train',transforms=transformations)
-    val_dataset = CityScapes(split='val',transforms=eval_transformations)
+    val_dataset = CityScapes(split='val',transforms=transformations)#eval_transformations)
 
     
     dataloader_train = DataLoader(train_dataset,
@@ -292,16 +292,16 @@ def main():
     if args.resume:
         for check in os.listdir('./checkpoints'):
             if 'latest_' in check:
-            
+
                 start_epoch_tmp = int(check.split('_')[1].replace('.pth',''))
-    
+
                 if start_epoch_tmp >= start_epoch:
                     start_epoch = start_epoch_tmp+1
                     pretrain_path = "checkpoints/"+check
-    
+
         #if args.resume and "latest_" in os.listdir("./checkpoints"):
         #    model
-    
+
         if start_epoch > 0:
             checkpoint = torch.load(pretrain_path)
             model.module.load_state_dict(checkpoint['state_dict'])
