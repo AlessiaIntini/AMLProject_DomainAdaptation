@@ -112,10 +112,10 @@ class CityScapes(VisionDataset):
 
         image = Image.open(self.images[index]).convert("RGB")
         target = Image.open(self.targets[index][0])
-        #image , target = self.transforms(image,target)
-        image = self.transforms(image)
-        target = self.transforms(target)
-        
+        image , target = self.transforms(image,target)
+        #image = self.transforms(image)
+        #target = self.transforms(target)
+        #
         return image, target
 
     def __len__(self) -> int:

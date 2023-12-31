@@ -262,10 +262,6 @@ def main():
     n_classes = args.num_classes
     args.dataset = args.dataset.upper()
     
-    to_tensor = trans.Compose([
-            trans.ToTensor(),
-            v2.Resize((512,1024))
-            ])
 
 
     transformations = ExtCompose([ExtResize((512,1024)), ExtToTensor()]) #ExtRandomHorizontalFlip(),
@@ -281,7 +277,7 @@ def main():
     
     
     print('training on CityScapes')
-    train_dataset = CityScapes(split = 'train',transforms=to_tensor)
+    train_dataset = CityScapes(split = 'train',transforms=transformations)
     val_dataset = CityScapes(split='val',transforms=eval_transformations)
 
     
