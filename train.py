@@ -231,10 +231,10 @@ def parse_args():
                        type=str,
                        default='',
                        help='Optional comment to add to the model name and to the log.')
-    parse.add_argument('--resume',
-                       type=bool,
-                       default=False,
-                       help='Select if you want to resume from the last checkpoint')
+    #parse.add_argument('--resume',
+    #                   type=bool,
+    #                   default=False,
+    #                   help='Select if you want to resume from the last checkpoint')
     return parse.parse_args()
 
 
