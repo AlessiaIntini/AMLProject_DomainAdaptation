@@ -65,11 +65,9 @@ class CityScapes(VisionDataset):
         split: str = "train",
         mode: str = "fine",
         target_type: Union[List[str], str] = "semantic",
-        #transform: Optional[Callable] = None,
-        #target_transform: Optional[Callable] = None,
         transforms: Optional[ExtTransforms] = None,
     ) -> None:
-        super().__init__(root, transforms)#, transform, target_transform)
+        super().__init__(root, transforms)
         print("root: ", root)
         self.mode = "gtFine" if mode == "fine" else "gtCoarse"
         self.images_dir = os.path.join(self.root,"images",split)
@@ -109,23 +107,13 @@ class CityScapes(VisionDataset):
                 self.images.append(os.path.join(img_dir, file_name))
                 self.targets.append(target_types)
 
-    #@classmethod
-    #def encode_target(cls, target):
-    #    return cls.id_to_train_id[np.array(target)]
-#
-    #@classmethod
-    #def decode_target(cls, target):
-    #    target[target == 255] = 19
-    #    #target = target.astype('uint8') + 1
-    #    return cls.train_id_to_color[target]
 
     def __getitem__(self, index: int) -> Tuple[Any, Any]:
 
         image = Image.open(self.images[index]).convert("RGB")
         target = Image.open(self.targets[index][0])
         image , target = self.transforms(image,target)
-        #image , target = ExtResize((512,1024))(image,target)
-        #image , target = ExtToTensor()(image,target)
+        
         return image, target
 
     def __len__(self) -> int:
@@ -141,12 +129,4 @@ class CityScapes(VisionDataset):
         else:
             return f"{mode}_polygons.json"
 
-    #@classmethod 
-    #def visualize_prediction(cls,outputs,labels) -> Tuple[Any, Any]:
-    #    preds = outputs.max(1)[1].detach().cpu().numpy()
-    #    lab = labels.detach().cpu().numpy()
-    #    colorized_preds = cls.decode_target(preds).astype('uint8') # To RGB images, (N, H, W, 3), ranged 0~255, numpy array
-    #    colorized_labels = cls.decode_target(lab).astype('uint8')
-    #    colorized_preds = Image.fromarray(colorized_preds[0]) # to PIL Image
-    #    colorized_labels = Image.fromarray(colorized_labels[0])
-    #    return colorized_preds , colorized_labels
+   
