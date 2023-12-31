@@ -64,7 +64,7 @@ class CityScapes(VisionDataset):
         root: str = "/content/Cityscapes/Cityspaces",
         split: str = "train",
         mode: str = "fine",
-        target_type: Union[List[str], str] = "semantic",
+        target_type: Union[List[str], str] = "color",
         transforms: Optional[ExtTransforms] = None,
     ) -> None:
         super().__init__(root, transforms)
