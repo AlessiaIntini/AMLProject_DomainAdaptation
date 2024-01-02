@@ -131,4 +131,19 @@ class CityScapes(VisionDataset):
         else:
             return f"{mode}_polygons.json"
 
+    @classmethod
+    def decode(cls, target):
+        target[target == 255] = 19
+        #target = target.astype('uint8') + 1
+        return cls.train_id_to_color[target]
+
+    @classmethod 
+    def visualize_prediction(cls,outputs,labels) -> Tuple[Any, Any]:
+        preds = outputs.max(1)[1].detach().cpu().numpy()
+        lab = labels.detach().cpu().numpy()
+        colorized_preds = cls.decode(preds).astype('uint8') # To RGB images, (N, H, W, 3), ranged 0~255, numpy array
+        colorized_labels = cls.decode(lab).astype('uint8')
+        colorized_preds = Image.fromarray(colorized_preds[0]) # to PIL Image
+        colorized_labels = Image.fromarray(colorized_labels[0])
+        return colorized_preds , colorized_labels
    

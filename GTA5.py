@@ -72,7 +72,7 @@ class GTA5(torchDataset):
     label_map = GTA5Labels_TaskCV2017()
 
     train_id = np.array([c.train_id for c in CityScapes.classes])
-    #id_to_train_id = np.append(id_to_train_id, 255)
+    #id_to_train_id = np.append(train_id, 255)
     #print(id_to_train_id)
 
     class PathPair_ImgAndLabel:
@@ -165,8 +165,6 @@ class GTA5(torchDataset):
         return color_lbl
     
     def convert_from_id_to_trainId(self, lbl):
-        if -1 in np.array(lbl):
-            print("-1 presente")
         return self.train_id[np.array(lbl)]
     
     @classmethod 

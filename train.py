@@ -31,7 +31,16 @@ def val(args, model, dataloader, writer = None , epoch = None, step = None):
         model.eval()
         precision_record = []
         hist = np.zeros((args.num_classes, args.num_classes))
-        random_sample = [random.randint(0, len(dataloader) - 1), random.randint(0, len(dataloader) - 1), random.randint(0, len(dataloader) - 1),random.randint(0, len(dataloader) - 1),random.randint(0, len(dataloader) - 1)]
+        random_sample = [random.randint(0, len(dataloader) - 1),
+                        random.randint(0, len(dataloader) - 1),
+                        random.randint(0, len(dataloader) - 1),
+                        random.randint(0, len(dataloader) - 1),
+                        random.randint(0, len(dataloader) - 1),
+                        random.randint(0, len(dataloader) - 1),
+                        random.randint(0, len(dataloader) - 1),
+                        random.randint(0, len(dataloader) - 1),
+                        random.randint(0, len(dataloader) - 1),
+                        random.randint(0, len(dataloader) - 1)]
         for i, (data, label) in enumerate(dataloader):
             label = label.type(torch.LongTensor)
             data = data.cuda()
@@ -41,7 +50,12 @@ def val(args, model, dataloader, writer = None , epoch = None, step = None):
             predict, _, _ = model(data)
             
             if i in random_sample and writer is not None:
-                colorized_predictions , colorized_labels = GTA5.visualize_prediction(predict, label)
+                if args.dataset == 'CITYSCAPES':
+                    colorized_predictions , colorized_labels = CityScapes.visualize_prediction(predict, label)
+                elif args.dataset == 'GTA5':
+                    colorized_predictions , colorized_labels = GTA5.visualize_prediction(predict, label)
+                elif args.dataset == 'CROSS_DOMAIN':
+                    colorized_predictions , colorized_labels = CityScapes.visualize_prediction(predict, label)    
                 writer.add_image('eval%d/iter%d/predicted_eval_labels' % (epoch, i), np.array(colorized_predictions), step, dataformats='HWC')
                 writer.add_image('eval%d/iter%d/correct_eval_labels' % (epoch, i), np.array(colorized_labels), step, dataformats='HWC')
                 writer.add_image('eval%d/iter%d/eval_original _data' % (epoch, i), np.array(data[0].cpu(),dtype='uint8'), step, dataformats='CHW')
@@ -258,17 +272,20 @@ def main():
         train_dataset = CityScapes(root = "./Cityscapes/Cityspaces", split = 'train',transforms=transformations)
         val_dataset = CityScapes(root= "./Cityscapes/Cityspaces", split='val',transforms=transformations)#eval_transformations)
 
-    else:
+    elif args.dataset == 'GTA5':
         print('training on GTA5')
         train_dataset_big = GTA5(root = Path(""), transforms=transformations)
         indexes = range(0, len(train_dataset_big))
         print(train_dataset_big)
-        splitting = train_test_split(indexes, train_size = 0.5, random_state = 42, shuffle = True)
+        splitting = train_test_split(indexes, train_size = 0.75, random_state = 42, shuffle = True)
         train_indexes = splitting[0]
         val_indexes = splitting[1]
         train_dataset = Subset(train_dataset_big, train_indexes)
         val_dataset = Subset(train_dataset_big, val_indexes)
-
+    else:
+        print('training on CROSS_DOMAIN, training on GTA5 and validating on CityScapes')
+        train_dataset = GTA5(root = Path(""), transforms=transformations)
+        val_dataset = CityScapes(root= "./Cityscapes/Cityspaces", split='val',transforms=transformations) 
     
     dataloader_train = DataLoader(train_dataset,
                     batch_size=args.batch_size,
@@ -327,7 +344,7 @@ def main():
             train(args, model, optimizer, dataloader_train, dataloader_val,start_epoch, comment="_{}_{}_{}_{}".format(args.mode,args.dataset,args.batch_size,args.learning_rate))
         case 'test':
             writer = SummaryWriter(comment="_{}_{}_{}_{}".format(args.mode,args.dataset,args.batch_size,args.learning_rate))
-            val(args, model, dataloader_val,writer=writer,epoch=0,step=0)
+            val(args, model, dataloader_val, writer=writer,epoch=0,step=0)
         case _:
             print('not supported mode \n')
             return None
