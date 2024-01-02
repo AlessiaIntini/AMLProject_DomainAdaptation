@@ -91,7 +91,7 @@ def train(args, model, optimizer, dataloader_train, dataloader_val,start_epoch, 
             data = data.cuda()
             label = label.long().cuda()
             optimizer.zero_grad()
-
+            print("Prova")
             with amp.autocast():
                 output, out16, out32 = model(data)
                 loss1 = loss_func(output, label.squeeze(1))
