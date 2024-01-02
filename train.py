@@ -90,7 +90,6 @@ def train(args, model, optimizer, dataloader_train, dataloader_val,start_epoch, 
         for i, (data, label) in enumerate(dataloader_train):
             data = data.cuda()
             label = label.long().cuda()
-            print(label.squeeze(1))
             optimizer.zero_grad()
             with amp.autocast():
                 output, out16, out32 = model(data)
@@ -99,7 +98,6 @@ def train(args, model, optimizer, dataloader_train, dataloader_val,start_epoch, 
                 loss3 = loss_func(out32, label.squeeze(1))
                 loss = loss1 + loss2 + loss3
 
-            print(loss)
             scaler.scale(loss).backward()
             scaler.step(optimizer)
             scaler.update()
@@ -222,7 +220,7 @@ def parse_args():
                        help='Define if the model should be trained from scratch or from a trained model')
     parse.add_argument('--dataset',
                           type=str,
-                          default='GTA5',
+                          default='CityScapes',
                           help='CityScapes, GTA5 or CROSS_DOMAIN. Define on which dataset the model should be trained and evaluated.')
     parse.add_argument('--resume_model_path',
                        type=str,
@@ -252,16 +250,17 @@ def main():
 
  
     eval_transformations = ExtCompose([ExtScale(0.5,interpolation=Image.Resampling.BICUBIC), ExtToTensor()])
-    
-    if args.dataset == 'CityScapes':
+    print(args.dataset)
+
+    if args.dataset == 'CITYSCAPES':
         print('training on CityScapes')
-        train_dataset = CityScapes(split = 'train',transforms=transformations)
-        val_dataset = CityScapes(split='val',transforms=transformations)#eval_transformations)
+        train_dataset = CityScapes(root = "./Cityscapes/Cityspaces", split = 'train',transforms=transformations)
+        val_dataset = CityScapes(root= "./Cityscapes/Cityspaces", split='val',transforms=transformations)#eval_transformations)
 
     else:
         print('training on GTA5')
-        train_dataset = GTA5(root = Path("/content/GTA5"), transforms=transformations)
-        val_dataset = GTA5(root = Path('/content/GTA5'), transforms=transformations)
+        train_dataset = GTA5(root = Path(""), transforms=transformations)
+        val_dataset = GTA5(root= Path(""), transforms=transformations)
 
     
     dataloader_train = DataLoader(train_dataset,

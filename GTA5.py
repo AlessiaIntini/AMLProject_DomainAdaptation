@@ -1,13 +1,14 @@
-from abc import ABCMeta
-from dataclasses import dataclass
-from typing import Tuple
 from pathlib import Path
 
 import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset as torchDataset
-from utils import ExtTransforms
-from typing import Optional
+import os
+from abc import ABCMeta
+from dataclasses import dataclass
+from typing import Tuple, Optional
+from utils import ExtResize, ExtToTensor, ExtTransforms , ExtCompose
+from cityscapes import CityScapes
 class BaseGTALabels(metaclass=ABCMeta):
     pass
 
@@ -65,19 +66,26 @@ class GTA5Labels_TaskCV2017(BaseGTALabels):
         ret = [label.ID for label in self.list_]
         return ret
 
+
+
 class GTA5(torchDataset):
     label_map = GTA5Labels_TaskCV2017()
+    id_to_train_id = np.array([c.train_id for c in CityScapes.classes])
+    id_to_train_id = np.append(id_to_train_id, 255)
+    #print(id_to_train_id)
 
     class PathPair_ImgAndLabel:
         IMG_DIR_NAME = "images"
         LBL_DIR_NAME = "labels"
         SUFFIX = ".png"
 
-        def __init__(self, root):
+        def __init__(self, root ,split, labels_source="train_ids"):
             self.root = root
+            self.labels_source = labels_source
+            self.split = split
             self.img_paths = self.create_imgpath_list()
             self.lbl_paths = self.create_lblpath_list()
-
+            
         def __len__(self):
             return len(self.img_paths)
 
@@ -87,38 +95,34 @@ class GTA5(torchDataset):
             return img_path, lbl_path
 
         def create_imgpath_list(self):
-            img_dir = self.root / self.IMG_DIR_NAME
-            img_path = [path for path in img_dir.glob(f"*{self.SUFFIX}")]
+            #img_dir = os.path.join(self.root , self.IMG_DIR_NAME,self.split)
+            img_dir = os.path.join(self.root , self.IMG_DIR_NAME)
+            img_path = [os.path.join(img_dir , path) for path in os.listdir(img_dir) if path.endswith(self.SUFFIX)]
             return img_path
 
         def create_lblpath_list(self):
-            lbl_dir = self.root / self.LBL_DIR_NAME
-            lbl_path = [path for path in lbl_dir.glob(f"*{self.SUFFIX}")]
+            lbl_dir = os.path.join(self.root,self.LBL_DIR_NAME)
+            if self.labels_source == "cityscapes":
+                lbl_path = [os.path.join(lbl_dir,path) for path in os.listdir(lbl_dir) if path.endswith(self.SUFFIX) and path.__contains__("_labelTrainIds")]
+            elif self.labels_source == "GTA5":
+                lbl_path = [os.path.join(lbl_dir,path) for path in os.listdir(lbl_dir) if (path.endswith(self.SUFFIX) and not path.__contains__("_labelTrainIds.png"))]
             return lbl_path
 
-    def __init__(self, root: Path, transforms: Optional[ExtTransforms] = None ):
+    def __init__(self, 
+                 root: Path,
+                 labels_source: str = "GTA5", # "cityscapes" or "GTA5"
+                 transforms:Optional[ExtTransforms]=None,
+                 split="train"):
         """
 
         :param root: (Path)
             this is the directory path for GTA5 data
-            must be the following
-            e.g.)
-                ./data
-                ├── images
-                │   ├── 00001.png
-                │   ├── ...
-                │   └── 24966.png
-                ├── images.txt
-                ├── labels
-                │   ├── 00001.png
-                │   ├── ...
-                │   └── 24966.png
-                ├── test.txt
-                └── train.txt
         """
-        self.root = root
+        self.root = os.path.join(root , 'GTA5')
+        self.labels_source = labels_source
         self.transforms = transforms
-        self.paths = self.PathPair_ImgAndLabel(root=self.root)
+        self.paths = self.PathPair_ImgAndLabel(root=self.root,split=split,labels_source=labels_source)
+        
 
     def __len__(self):
         return len(self.paths)
@@ -127,10 +131,19 @@ class GTA5(torchDataset):
         img_path, lbl_path = self.paths[idx]
         if isPath:
             return img_path, lbl_path
-
         img = self.read_img(img_path)
         lbl = self.read_img(lbl_path)
-        img, lbl = self.transforms(img, lbl)
+        
+        if self.labels_source == "GTA5":
+            lbl = Image.fromarray(np.array(self.map_to_cityscapes(lbl),dtype='uint8')) 
+            #if not os.path.exists(lbl_path.split('.png')[0] + "_labelTrainIds.png"):
+            #    lbl.convert('L').save(lbl_path.split('.png')[0] + "_labelTrainIds.png")
+        
+        if self.transforms is not None:
+            img, lbl = self.transforms(img, lbl)
+        else:
+            img = ExtToTensor()(img)
+            lbl = ExtToTensor()(lbl)
         return img, lbl
 
     @staticmethod
@@ -150,3 +163,8 @@ class GTA5(torchDataset):
         for label in label_map:
             color_lbl[lbl == label.ID] = label.color
         return color_lbl
+    
+    def map_to_cityscapes(self, lbl):
+        print(self.id_to_train_id[np.array(lbl.convert('RGB'))])
+
+        return self.id_to_train_id[np.array(lbl)]
