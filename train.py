@@ -90,7 +90,7 @@ def train(args, model, optimizer, dataloader_train, dataloader_val,start_epoch, 
         for i, (data, label) in enumerate(dataloader_train):
             data = data.cuda()
             label = label.long().cuda()
-            print(label)
+            print(label.squeeze(1))
             optimizer.zero_grad()
             with amp.autocast():
                 output, out16, out32 = model(data)
