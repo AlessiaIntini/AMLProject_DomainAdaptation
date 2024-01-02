@@ -6,9 +6,11 @@
 
 /share
 
-/runs
+/checkpoints/latest*
+/checkpoints/best*
 
 /model/__pycache__
 /__pycache__
 
 pyvenv.cfg
+

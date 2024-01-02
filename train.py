@@ -7,7 +7,7 @@ import torchvision.transforms as transforms
 from torchvision.transforms import v2
 from utils import ExtCompose, ExtResize, ExtToTensor, ExtTransforms, ExtRandomHorizontalFlip , ExtScale , ExtRandomCrop
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 import logging
 import argparse
 import numpy as np
@@ -20,6 +20,7 @@ import random
 import os
 from PIL import Image
 from pathlib import Path
+from sklearn.model_selection import train_test_split
 
 logger = logging.getLogger()
 
@@ -30,7 +31,7 @@ def val(args, model, dataloader, writer = None , epoch = None, step = None):
         model.eval()
         precision_record = []
         hist = np.zeros((args.num_classes, args.num_classes))
-        #random_sample = random.randint(0, len(dataloader) - 1)
+        random_sample = [random.randint(0, len(dataloader) - 1), random.randint(0, len(dataloader) - 1), random.randint(0, len(dataloader) - 1),random.randint(0, len(dataloader) - 1),random.randint(0, len(dataloader) - 1)]
         for i, (data, label) in enumerate(dataloader):
             label = label.type(torch.LongTensor)
             data = data.cuda()
@@ -39,11 +40,11 @@ def val(args, model, dataloader, writer = None , epoch = None, step = None):
             # get RGB predict image
             predict, _, _ = model(data)
             
-            #if i == random_sample and writer is not None:
-            #    colorized_predictions , colorized_labels = CityScapes.visualize_prediction(predict, label)
-            #    writer.add_image('eval%d/iter%d/predicted_eval_labels' % (epoch, i), np.array(colorized_predictions), step, dataformats='HWC')
-            #    writer.add_image('eval%d/iter%d/correct_eval_labels' % (epoch, i), np.array(colorized_labels), step, dataformats='HWC')
-            #    writer.add_image('eval%d/iter%d/eval_original _data' % (epoch, i), np.array(data[0].cpu(),dtype='uint8'), step, dataformats='CHW')
+            if i in random_sample and writer is not None:
+                colorized_predictions , colorized_labels = GTA5.visualize_prediction(predict, label)
+                writer.add_image('eval%d/iter%d/predicted_eval_labels' % (epoch, i), np.array(colorized_predictions), step, dataformats='HWC')
+                writer.add_image('eval%d/iter%d/correct_eval_labels' % (epoch, i), np.array(colorized_labels), step, dataformats='HWC')
+                writer.add_image('eval%d/iter%d/eval_original _data' % (epoch, i), np.array(data[0].cpu(),dtype='uint8'), step, dataformats='CHW')
 
             predict = predict.squeeze(0)
             predict = reverse_one_hot(predict)
@@ -259,8 +260,14 @@ def main():
 
     else:
         print('training on GTA5')
-        train_dataset = GTA5(root = Path(""), transforms=transformations)
-        val_dataset = GTA5(root= Path(""), transforms=transformations)
+        train_dataset_big = GTA5(root = Path(""), transforms=transformations)
+        indexes = range(0, len(train_dataset_big))
+        print(train_dataset_big)
+        splitting = train_test_split(indexes, train_size = 0.5, random_state = 42, shuffle = True)
+        train_indexes = splitting[0]
+        val_indexes = splitting[1]
+        train_dataset = Subset(train_dataset_big, train_indexes)
+        val_dataset = Subset(train_dataset_big, val_indexes)
 
     
     dataloader_train = DataLoader(train_dataset,
