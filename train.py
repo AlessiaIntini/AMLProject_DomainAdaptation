@@ -2,7 +2,7 @@
 # -*- encoding: utf-8 -*-
 from model.model_stages import BiSeNet
 from cityscapes import CityScapes
-#from GTA5 import GTA5
+from GTA5 import GTA5
 import torchvision.transforms as transforms
 from torchvision.transforms import v2
 from utils import ExtCompose, ExtResize, ExtToTensor, ExtTransforms, ExtRandomHorizontalFlip , ExtScale , ExtRandomCrop
@@ -19,6 +19,7 @@ from tqdm import tqdm
 import random
 import os
 from PIL import Image
+from pathlib import Path
 
 logger = logging.getLogger()
 
@@ -252,10 +253,15 @@ def main():
  
     eval_transformations = ExtCompose([ExtScale(0.5,interpolation=Image.Resampling.BICUBIC), ExtToTensor()])
     
-    
-    print('training on CityScapes')
-    train_dataset = CityScapes(split = 'train',transforms=transformations)
-    val_dataset = CityScapes(split='val',transforms=transformations)#eval_transformations)
+    if args.dataset == 'CityScapes':
+        print('training on CityScapes')
+        train_dataset = CityScapes(split = 'train',transforms=transformations)
+        val_dataset = CityScapes(split='val',transforms=transformations)#eval_transformations)
+
+    else:
+        print('training on GTA5')
+        train_dataset = GTA5(root = Path("./GTA5"), transforms=transformations)
+        val_dataset = GTA5(root = Path('./GTA5'), transforms=transformations)
 
     
     dataloader_train = DataLoader(train_dataset,
