@@ -96,9 +96,12 @@ def train(args, model, optimizer, dataloader_train, dataloader_val,start_epoch, 
                 loss1 = loss_func(output, label.squeeze(1))
                 loss2 = loss_func(out16, label.squeeze(1))
                 loss3 = loss_func(out32, label.squeeze(1))
+                print("Loss")
+                print(loss1)
+                print(loss2)
+                print(loss3)
                 loss = loss1 + loss2 + loss3
 
-            print("Valore loss")
             print(loss)
             scaler.scale(loss).backward()
             scaler.step(optimizer)
