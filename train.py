@@ -260,8 +260,8 @@ def main():
 
     else:
         print('training on GTA5')
-        train_dataset = GTA5(root = Path("./GTA5"), transforms=transformations)
-        val_dataset = GTA5(root = Path('./GTA5'), transforms=transformations)
+        train_dataset = GTA5(root = Path("/content/GTA5"), transforms=transformations)
+        val_dataset = GTA5(root = Path('/content/GTA5'), transforms=transformations)
 
     
     dataloader_train = DataLoader(train_dataset,
