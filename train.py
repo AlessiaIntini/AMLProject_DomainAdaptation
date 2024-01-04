@@ -276,6 +276,7 @@ def main():
         cropsize = (720,1280)
         #eval_transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
         if args.augmentation:
+            print("Performing data augmentation")
             transformations = ExtCompose([ExtRandomCrop(cropsize), ExtRandomHorizontalFlip(), ExtToTensor()])
             train_dataset_big = GTA5(root = Path("/content"), transforms=transformations)
         else: 
