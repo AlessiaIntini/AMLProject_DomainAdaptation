@@ -258,22 +258,22 @@ def main():
     ## dataset
     n_classes = args.num_classes
     args.dataset = args.dataset.upper()
-    
-    cropsize = (512,1024)
-
-    transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
-
  
     eval_transformations = ExtCompose([ExtScale(0.5,interpolation=Image.Resampling.BICUBIC), ExtToTensor()])
     print(args.dataset)
-
+    print("Dim batch_size")
+    print(args.batch_size)
     if args.dataset == 'CITYSCAPES':
         print('training on CityScapes')
+        cropsize = (512,1024)
+        transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
         train_dataset = CityScapes(root = "./Cityscapes/Cityspaces", split = 'train',transforms=transformations)
         val_dataset = CityScapes(root= "./Cityscapes/Cityspaces", split='val',transforms=transformations)#eval_transformations)
 
     elif args.dataset == 'GTA5':
         print('training on GTA5')
+        cropsize = (720,1280)
+        transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
         train_dataset_big = GTA5(root = Path(""), transforms=transformations)
         indexes = range(0, len(train_dataset_big))
         print(train_dataset_big)
@@ -284,7 +284,11 @@ def main():
         val_dataset = Subset(train_dataset_big, val_indexes)
     else:
         print('training on CROSS_DOMAIN, training on GTA5 and validating on CityScapes')
+        cropsize = (720,1280)
+        transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
         train_dataset = GTA5(root = Path(""), transforms=transformations)
+        cropsize = (512,1024)
+        transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
         val_dataset = CityScapes(root= "./Cityscapes/Cityspaces", split='val',transforms=transformations) 
     
     dataloader_train = DataLoader(train_dataset,
