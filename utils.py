@@ -296,7 +296,9 @@ def group_weight(weight_group, module, norm_layer, lr):
 	weight_group.append(dict(params=group_no_decay, weight_decay=.0, lr=lr))
 	return weight_group
 
-##############################################################################################################
+#
+#  Extended Transforms for Semantic Segmentation
+#
 
 class ExtTransforms(object):
 	def	__init__(self) -> None:
@@ -337,15 +339,28 @@ class ExtCompose(ExtTransforms):
             img, lbl = t(img, lbl)
         return img, lbl
 
-class ExtRandomHorizontalFlip(ExtTransforms):
+class ExtRandomHorizontalFlip(object):
+    """Horizontally flip the given PIL Image randomly with a given probability.
+    Args:
+        p (float): probability of the image being flipped. Default value is 0.5
+    """
 
     def __init__(self, p=0.5):
         self.p = p
 
-    def __call__(self, img : Image, lbl : Image) -> (Image, Image):
+    def __call__(self, img, lbl):
+        """
+        Args:
+            img (PIL Image): Image to be flipped.
+        Returns:
+            PIL Image: Randomly flipped image.
+        """
         if random.random() < self.p:
             return F.hflip(img), F.hflip(lbl)
         return img, lbl
+
+    def __repr__(self):
+        return self.__class__.__name__ + '(p={})'.format(self.p)
 
 
 class ExtScale(ExtTransforms):

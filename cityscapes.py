@@ -51,7 +51,7 @@ class CityScapes(VisionDataset):
         CityscapesClass("train",                31, 16, "vehicle", 7, True, False, (0, 80, 100)),
         CityscapesClass("motorcycle",           32, 17, "vehicle", 7, True, False, (0, 0, 230)),
         CityscapesClass("bicycle",              33, 18, "vehicle", 7, True, False, (119, 11, 32)),
-        CityscapesClass("license plate",        -1, -1, "vehicle", 7, False, True, (0, 0, 142)),
+        CityscapesClass("license plate",        -1, 255, "vehicle", 7, False, True, (0, 0, 142)),
     ]
 
     train_id_to_color = [c.color for c in classes if (c.train_id != -1 and c.train_id != 255)]

@@ -245,10 +245,10 @@ def parse_args():
                        type=str,
                        default='',
                        help='Optional comment to add to the model name and to the log.')
-    #parse.add_argument('--resume',
-    #                   type=bool,
-    #                   default=False,
-    #                   help='Select if you want to resume from the last checkpoint')
+    parse.add_argument('--augmentation',
+                       type=str2bool,
+                       default=False,
+                       help='Select if you want to perform some data augmentation')
     return parse.parse_args()
 
 
@@ -258,8 +258,8 @@ def main():
     ## dataset
     n_classes = args.num_classes
     args.dataset = args.dataset.upper()
- 
-    eval_transformations = ExtCompose([ExtScale(0.5,interpolation=Image.Resampling.BICUBIC), ExtToTensor()])
+    
+    
     print(args.dataset)
     print("Dim batch_size")
     print(args.batch_size)
@@ -267,16 +267,23 @@ def main():
         print('training on CityScapes')
         cropsize = (512,1024)
         transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
+        
         train_dataset = CityScapes(root = "./Cityscapes/Cityspaces", split = 'train',transforms=transformations)
         val_dataset = CityScapes(root= "./Cityscapes/Cityspaces", split='val',transforms=transformations)#eval_transformations)
 
     elif args.dataset == 'GTA5':
         print('training on GTA5')
         cropsize = (720,1280)
-        transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
-        train_dataset_big = GTA5(root = Path(""), transforms=transformations)
+        #eval_transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
+        if args.augmentation:
+            transformations = ExtCompose([ExtRandomCrop(cropsize), ExtRandomHorizontalFlip(), ExtToTensor()])
+            train_dataset_big = GTA5(root = Path("/content"), transforms=transformations)
+        else: 
+            transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
+            train_dataset_big = GTA5(root = Path("/content"), transforms=transformations)
+        
         indexes = range(0, len(train_dataset_big))
-        print(train_dataset_big)
+        
         splitting = train_test_split(indexes, train_size = 0.75, random_state = 42, shuffle = True)
         train_indexes = splitting[0]
         val_indexes = splitting[1]
