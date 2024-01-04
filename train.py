@@ -2,12 +2,12 @@
 # -*- encoding: utf-8 -*-
 from model.model_stages import BiSeNet
 from cityscapes import CityScapes
-#from GTA5 import GTA5
+from GTA5 import GTA5
 import torchvision.transforms as transforms
 from torchvision.transforms import v2
 from utils import ExtCompose, ExtResize, ExtToTensor, ExtTransforms, ExtRandomHorizontalFlip , ExtScale , ExtRandomCrop
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 import logging
 import argparse
 import numpy as np
@@ -19,6 +19,8 @@ from tqdm import tqdm
 import random
 import os
 from PIL import Image
+from pathlib import Path
+from sklearn.model_selection import train_test_split
 
 logger = logging.getLogger()
 
@@ -29,7 +31,16 @@ def val(args, model, dataloader, writer = None , epoch = None, step = None):
         model.eval()
         precision_record = []
         hist = np.zeros((args.num_classes, args.num_classes))
-        #random_sample = random.randint(0, len(dataloader) - 1)
+        random_sample = [random.randint(0, len(dataloader) - 1),
+                        random.randint(0, len(dataloader) - 1),
+                        random.randint(0, len(dataloader) - 1),
+                        random.randint(0, len(dataloader) - 1),
+                        random.randint(0, len(dataloader) - 1),
+                        random.randint(0, len(dataloader) - 1),
+                        random.randint(0, len(dataloader) - 1),
+                        random.randint(0, len(dataloader) - 1),
+                        random.randint(0, len(dataloader) - 1),
+                        random.randint(0, len(dataloader) - 1)]
         for i, (data, label) in enumerate(dataloader):
             label = label.type(torch.LongTensor)
             data = data.cuda()
@@ -38,11 +49,16 @@ def val(args, model, dataloader, writer = None , epoch = None, step = None):
             # get RGB predict image
             predict, _, _ = model(data)
             
-            #if i == random_sample and writer is not None:
-            #    colorized_predictions , colorized_labels = CityScapes.visualize_prediction(predict, label)
-            #    writer.add_image('eval%d/iter%d/predicted_eval_labels' % (epoch, i), np.array(colorized_predictions), step, dataformats='HWC')
-            #    writer.add_image('eval%d/iter%d/correct_eval_labels' % (epoch, i), np.array(colorized_labels), step, dataformats='HWC')
-            #    writer.add_image('eval%d/iter%d/eval_original _data' % (epoch, i), np.array(data[0].cpu(),dtype='uint8'), step, dataformats='CHW')
+            if i in random_sample and writer is not None:
+                if args.dataset == 'CITYSCAPES':
+                    colorized_predictions , colorized_labels = CityScapes.visualize_prediction(predict, label)
+                elif args.dataset == 'GTA5':
+                    colorized_predictions , colorized_labels = GTA5.visualize_prediction(predict, label)
+                elif args.dataset == 'CROSS_DOMAIN':
+                    colorized_predictions , colorized_labels = CityScapes.visualize_prediction(predict, label)    
+                writer.add_image('eval%d/iter%d/predicted_eval_labels' % (epoch, i), np.array(colorized_predictions), step, dataformats='HWC')
+                writer.add_image('eval%d/iter%d/correct_eval_labels' % (epoch, i), np.array(colorized_labels), step, dataformats='HWC')
+                writer.add_image('eval%d/iter%d/eval_original _data' % (epoch, i), np.array(data[0].cpu(),dtype='uint8'), step, dataformats='CHW')
 
             predict = predict.squeeze(0)
             predict = reverse_one_hot(predict)
@@ -90,7 +106,6 @@ def train(args, model, optimizer, dataloader_train, dataloader_val,start_epoch, 
             data = data.cuda()
             label = label.long().cuda()
             optimizer.zero_grad()
-
             with amp.autocast():
                 output, out16, out32 = model(data)
                 loss1 = loss_func(output, label.squeeze(1))
@@ -98,7 +113,6 @@ def train(args, model, optimizer, dataloader_train, dataloader_val,start_epoch, 
                 loss3 = loss_func(out32, label.squeeze(1))
                 loss = loss1 + loss2 + loss3
 
-                
             scaler.scale(loss).backward()
             scaler.step(optimizer)
             scaler.update()
@@ -221,7 +235,7 @@ def parse_args():
                        help='Define if the model should be trained from scratch or from a trained model')
     parse.add_argument('--dataset',
                           type=str,
-                          default='GTA5',
+                          default='CityScapes',
                           help='CityScapes, GTA5 or CROSS_DOMAIN. Define on which dataset the model should be trained and evaluated.')
     parse.add_argument('--resume_model_path',
                        type=str,
@@ -244,19 +258,38 @@ def main():
     ## dataset
     n_classes = args.num_classes
     args.dataset = args.dataset.upper()
-    
-    cropsize = (512,1024)
-
-    transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
-
  
     eval_transformations = ExtCompose([ExtScale(0.5,interpolation=Image.Resampling.BICUBIC), ExtToTensor()])
-    
-    
-    print('training on CityScapes')
-    train_dataset = CityScapes(split = 'train',transforms=transformations)
-    val_dataset = CityScapes(split='val',transforms=transformations)#eval_transformations)
+    print(args.dataset)
+    print("Dim batch_size")
+    print(args.batch_size)
+    if args.dataset == 'CITYSCAPES':
+        print('training on CityScapes')
+        cropsize = (512,1024)
+        transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
+        train_dataset = CityScapes(root = "./Cityscapes/Cityspaces", split = 'train',transforms=transformations)
+        val_dataset = CityScapes(root= "./Cityscapes/Cityspaces", split='val',transforms=transformations)#eval_transformations)
 
+    elif args.dataset == 'GTA5':
+        print('training on GTA5')
+        cropsize = (720,1280)
+        transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
+        train_dataset_big = GTA5(root = Path(""), transforms=transformations)
+        indexes = range(0, len(train_dataset_big))
+        print(train_dataset_big)
+        splitting = train_test_split(indexes, train_size = 0.75, random_state = 42, shuffle = True)
+        train_indexes = splitting[0]
+        val_indexes = splitting[1]
+        train_dataset = Subset(train_dataset_big, train_indexes)
+        val_dataset = Subset(train_dataset_big, val_indexes)
+    else:
+        print('training on CROSS_DOMAIN, training on GTA5 and validating on CityScapes')
+        cropsize = (720,1280)
+        transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
+        train_dataset = GTA5(root = Path(""), transforms=transformations)
+        cropsize = (512,1024)
+        transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
+        val_dataset = CityScapes(root= "./Cityscapes/Cityspaces", split='val',transforms=transformations) 
     
     dataloader_train = DataLoader(train_dataset,
                     batch_size=args.batch_size,
@@ -315,7 +348,7 @@ def main():
             train(args, model, optimizer, dataloader_train, dataloader_val,start_epoch, comment="_{}_{}_{}_{}".format(args.mode,args.dataset,args.batch_size,args.learning_rate))
         case 'test':
             writer = SummaryWriter(comment="_{}_{}_{}_{}".format(args.mode,args.dataset,args.batch_size,args.learning_rate))
-            val(args, model, dataloader_val,writer=writer,epoch=0,step=0)
+            val(args, model, dataloader_val, writer=writer,epoch=0,step=0)
         case _:
             print('not supported mode \n')
             return None
