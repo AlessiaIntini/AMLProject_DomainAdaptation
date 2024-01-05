@@ -355,6 +355,7 @@ def main():
             checkpoint = torch.load(pretrain_path)
             model.module.load_state_dict(checkpoint['state_dict'])
             optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            print("Loaded latest checkpoint")
 
 
     
