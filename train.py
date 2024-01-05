@@ -60,6 +60,14 @@ def val(args, model, dataloader, writer = None , epoch = None, step = None):
                 writer.add_image('eval%d/iter%d/correct_eval_labels' % (epoch, i), np.array(colorized_labels), step, dataformats='HWC')
                 writer.add_image('eval%d/iter%d/eval_original _data' % (epoch, i), np.array(data[0].cpu(),dtype='uint8'), step, dataformats='CHW')
 
+                colorized_predictions.save("/content/results/img"+str(i)+".png")
+                colorized_labels.save("/content/results/lbl"+str(i)+".png")
+
+                #import matplotlib.pyplot as plt
+                #plt.imshow("/content/results/img"+str(i)+".png")
+                #plt.imshow("/content/results/lbl"+str(i)+".png")
+
+
             predict = predict.squeeze(0)
             predict = reverse_one_hot(predict)
             predict = np.array(predict.cpu())
@@ -294,10 +302,10 @@ def main():
         print('training on CROSS_DOMAIN, training on GTA5 and validating on CityScapes')
         cropsize = (720,1280)
         transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
-        train_dataset = GTA5(root = Path(""), transforms=transformations)
+        train_dataset = GTA5(root = Path("/content"), transforms=transformations)
         cropsize = (512,1024)
         transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
-        val_dataset = CityScapes(root= "./Cityscapes/Cityspaces", split='val',transforms=transformations) 
+        val_dataset = CityScapes(root= "/content/Cityscapes/Cityspaces", split='val',transforms=transformations) 
     
     dataloader_train = DataLoader(train_dataset,
                     batch_size=args.batch_size,

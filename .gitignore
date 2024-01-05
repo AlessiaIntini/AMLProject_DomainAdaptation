@@ -9,6 +9,8 @@
 /checkpoints/latest*
 /checkpoints/best*
 
+/runs/
+
 /model/__pycache__
 /__pycache__
 
