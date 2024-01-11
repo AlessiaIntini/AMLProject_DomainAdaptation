@@ -300,12 +300,13 @@ def main():
         val_dataset = Subset(train_dataset_big, val_indexes)
     else:
         print('training on CROSS_DOMAIN, training on GTA5 and validating on CityScapes')
-        #cropsize = (720,1280)
-        #transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
-        transformations = ExtCompose([ExtToTensor()])
+        cropsize = (720,1280)
+        transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
+        #transformations = ExtCompose([ExtToTensor()])
         train_dataset = GTA5(root = Path("/content"), transforms=transformations)
         cropsize = (512,1024)
-        transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
+        #transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
+        transformations = ExtCompose([ExtToTensor()])
         val_dataset = CityScapes(root= "/content/Cityscapes/Cityspaces", split='val',transforms=transformations) 
     
     dataloader_train = DataLoader(train_dataset,
