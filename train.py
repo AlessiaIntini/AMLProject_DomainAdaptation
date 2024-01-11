@@ -100,7 +100,7 @@ def train(args, model, optimizer, dataloader_train, dataloader_val,start_epoch, 
     writer = SummaryWriter(comment=comment)
     scaler = amp.GradScaler()
 
-    loss_func = torch.nn.CrossEntropyLoss(ignore_index=255) #we should check if it's the right index to ignore, is it 255 or 19?
+    loss_func = torch.nn.CrossEntropyLoss(ignore_index=255) 
     max_miou = 0
     step = start_epoch
     for epoch in range(start_epoch,args.num_epochs):
@@ -273,7 +273,7 @@ def main():
     print(args.batch_size)
     if args.dataset == 'CITYSCAPES':
         print('training on CityScapes')
-        cropsize = (512,1024)
+        cropsize = (512,1024) #resize diversa per test
         transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
         
         train_dataset = CityScapes(root = "./Cityscapes/Cityspaces", split = 'train',transforms=transformations)
@@ -300,8 +300,9 @@ def main():
         val_dataset = Subset(train_dataset_big, val_indexes)
     else:
         print('training on CROSS_DOMAIN, training on GTA5 and validating on CityScapes')
-        cropsize = (720,1280)
-        transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
+        #cropsize = (720,1280)
+        #transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
+        transformations = ExtCompose([ExtToTensor()])
         train_dataset = GTA5(root = Path("/content"), transforms=transformations)
         cropsize = (512,1024)
         transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
