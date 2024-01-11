@@ -60,8 +60,8 @@ def val(args, model, dataloader, writer = None , epoch = None, step = None):
                 writer.add_image('eval%d/iter%d/correct_eval_labels' % (epoch, i), np.array(colorized_labels), step, dataformats='HWC')
                 writer.add_image('eval%d/iter%d/eval_original _data' % (epoch, i), np.array(data[0].cpu(),dtype='uint8'), step, dataformats='CHW')
 
-                colorized_predictions.save("/content/results/img"+str(i)+".png")
-                colorized_labels.save("/content/results/lbl"+str(i)+".png")
+                #colorized_predictions.save("/content/results/img"+str(i)+".png")
+                #colorized_labels.save("/content/results/lbl"+str(i)+".png")
 
                 #import matplotlib.pyplot as plt
                 #plt.imshow("/content/results/img"+str(i)+".png")
