@@ -470,12 +470,12 @@ def main():
         transformations = ExtCompose([ExtToTensor()])
         val_dataset = CityScapes(root= "/content/Cityscapes/Cityspaces", split='val',transforms=transformations) 
     
-    dataloader_train = DataLoader(train_dataset,
-                    batch_size=args.batch_size,
-                    shuffle=False,
-                    num_workers=args.num_workers,
-                    pin_memory=False,
-                    drop_last=True)
+    #dataloader_train = DataLoader(train_dataset,
+    #                batch_size=args.batch_size,
+    #                shuffle=False,
+    #                num_workers=args.num_workers,
+    #                pin_memory=False,
+    #                drop_last=True)
     dataloader_val = DataLoader(val_dataset,
                        batch_size=1,
                        shuffle=False,
