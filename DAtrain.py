@@ -180,7 +180,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
 
         tq = tqdm(total=len(tuple(zip(dataloader_source, dataloader_target))) * args.batch_size)
         tq.set_description('epoch %d, lr %f, lr_discr %f' % (epoch, lr,discr_lr))
-
+        print(len(tuple(zip(dataloader_source, dataloader_target))))
         loss_record = []
         #image_number = random.randint(0, len(dataloader_train) - 1)
         for i, ((src_x, src_y), (trg_x, _)) in enumerate(zip(dataloader_source, dataloader_target)):
@@ -241,7 +241,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
             scaler.step(optimizer_D1)
             scaler.step(optimizer)
             scaler.update()
-            
+
 
             tq.update(args.batch_size)
             tq.set_postfix(loss='%.6f' % loss)
