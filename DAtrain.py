@@ -185,8 +185,8 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
         #image_number = random.randint(0, len(dataloader_train) - 1)
         for i, ((src_x, src_y), (trg_x, _)) in enumerate(zip(dataloader_source, dataloader_target)):
             trg_x = trg_x.cuda()
-            scr_x = scr_x.cuda()
-            scr_y = scr_y.long().cuda()
+            src_x = src_x.cuda()
+            src_y = src_y.long().cuda()
             print(i)
             optimizer.zero_grad()
             optimizer_D1.zero_grad()
@@ -199,10 +199,10 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
 
         
             with amp.autocast():
-                output_s, out16_s, out32_s = model(scr_x)
-                loss1 = loss_func(output_s, scr_y.squeeze(1))
-                loss2 = loss_func(out16_s, scr_y.squeeze(1))
-                loss3 = loss_func(out32_s, scr_y.squeeze(1))
+                output_s, out16_s, out32_s = model(src_x)
+                loss1 = loss_func(output_s, src_y.squeeze(1))
+                loss2 = loss_func(out16_s, src_y.squeeze(1))
+                loss3 = loss_func(out32_s, src_y.squeeze(1))
                 loss = loss1 + loss2 + loss3
 
             scaler.scale(loss).backward()
