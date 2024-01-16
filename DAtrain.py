@@ -187,7 +187,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
             trg_x = trg_x.cuda()
             scr_x = scr_x.cuda()
             scr_y = scr_y.long().cuda()
-
+            print(i)
             optimizer.zero_grad()
             optimizer_D1.zero_grad()
 
@@ -209,7 +209,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
             scaler.step(optimizer)
             scaler.update()
 
-
+            print(loss)
             #Train with target
             with amp.autocast():
                 output_t, out16_t, out32_t = model(trg_x)
@@ -223,7 +223,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
             scaler.scale(loss).backward()
             scaler.step(optimizer)
             scaler.update()
-
+            print(loss)
             #Train D
             for param in model_D1.parameters():
                 param.requires_grad = True
@@ -241,7 +241,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
             scaler.step(optimizer_D1)
             scaler.step(optimizer)
             scaler.update()
-
+            
 
             tq.update(args.batch_size)
             tq.set_postfix(loss='%.6f' % loss)
