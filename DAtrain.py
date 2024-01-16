@@ -395,8 +395,8 @@ def main():
         cropsize = (512,1024) #resize diversa per test
         transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
         
-        train_dataset = CityScapes(root = "./Cityscapes/Cityspaces", split = 'train',transforms=transformations)
-        val_dataset = CityScapes(root= "./Cityscapes/Cityspaces", split='val',transforms=transformations)#eval_transformations)
+        train_dataset = CityScapes(root = "/content/Cityscapes/Cityspaces", split = 'train',transforms=transformations)
+        val_dataset = CityScapes(root= "/content/Cityscapes/Cityspaces", split='val',transforms=transformations)#eval_transformations)
 
     elif args.dataset == 'GTA5':
         print('training on GTA5')
@@ -423,14 +423,14 @@ def main():
         cropsize = (512,1024) #resize diversa per test
         transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
         
-        target_dataset = CityScapes(root = "./Cityscapes/Cityspaces", split = 'train',transforms=transformations)
+        target_dataset = CityScapes(root = "/content/Cityscapes/Cityspaces", split = 'train',transforms=transformations)
 
         cropsize = (720,1280)
         transformations = ExtCompose([ExtRandomCrop(cropsize), ExtRandomHorizontalFlip(), ExtColorJitter(0.5,0.5,0.5,0.5), ExtToTensor()])
         source_dataset = GTA5(root = Path("/content"), transforms=transformations)
         
         transformations = ExtCompose([ExtToTensor()])
-        val_dataset = CityScapes(root= "./Cityscapes/Cityspaces", split='val',transforms=transformations)#eval_transformations)
+        val_dataset = CityScapes(root= "/content/Cityscapes/Cityspaces", split='val',transforms=transformations)#eval_transformations)
 
         dataloader_source = DataLoader(source_dataset,
                     batch_size=args.batch_size,
