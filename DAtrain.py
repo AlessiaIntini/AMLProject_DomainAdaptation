@@ -452,7 +452,7 @@ def main():
 
         
 
-        optimizer_D1 = torch.optim.Adam(model_D1.parameters(), lr=args.learning_rate_D, betas=(0.9, 0.99))
+        optimizer_D1 = torch.optim.Adam(model_D1.parameters(), lr=args.learning_rate, betas=(0.9, 0.99))
         #optimizer_D1.zero_grad()
 
 
