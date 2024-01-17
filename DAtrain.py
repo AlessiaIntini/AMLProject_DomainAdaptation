@@ -206,8 +206,8 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
                 loss = loss1 + loss2 + loss3
 
             scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
+            #scaler.step(optimizer)
+            #scaler.update()
 
             print(loss)
             #Train with target
