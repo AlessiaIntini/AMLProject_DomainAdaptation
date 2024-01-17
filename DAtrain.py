@@ -220,7 +220,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
 
                 D_out1 = model_D1(F.softmax(out32_t).float())
 
-                loss_adv_target1 = bce_loss(D_out1,Variable(torch.FloatTensor(D_out1.data.size()).fill_(source_label)).cuda())
+                loss_adv_target1 = bce_loss(D_out1,torch.FloatTensor(D_out1.data.size()).fill_(source_label).cuda())
 
                 loss = 0.1*loss_adv_target1
 
