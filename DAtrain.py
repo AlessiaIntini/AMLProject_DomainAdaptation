@@ -211,6 +211,10 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
 
             print(loss)
             #Train with target
+
+            optimizer.zero_grad()
+            optimizer_D1.zero_grad()
+
             with amp.autocast():
                 output_t, out16_t, out32_t = model(trg_x)
 
@@ -225,6 +229,11 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
             scaler.update()
             print(loss)
             #Train D
+
+            optimizer.zero_grad()
+            optimizer_D1.zero_grad()
+
+
             for param in model_D1.parameters():
                 param.requires_grad = True
 
@@ -233,6 +242,9 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
             scaler.scale(loss_d1_s).backward()
             
             
+            optimizer.zero_grad()
+            optimizer_D1.zero_grad()
+
             D_out1_t = model_D1(F.softmax(out32_t).float())
             loss_d1_t = bce_loss(D_out1_t,Variable(torch.FloatTensor(D_out1_t.data.size()).fill_(target_label)).cuda())    
             scaler.scale(loss_d1_t).backward()
