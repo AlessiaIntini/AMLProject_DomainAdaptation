@@ -225,13 +225,13 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
                 loss = 0.1*loss_adv_target1
 
             scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
+            #scaler.step(optimizer)
+            #scaler.update()
             print(loss)
             #Train D
 
-            optimizer.zero_grad()
-            optimizer_D1.zero_grad()
+            #optimizer.zero_grad()
+            #optimizer_D1.zero_grad()
 
 
             for param in model_D1.parameters():
@@ -242,8 +242,8 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
             scaler.scale(loss_d1_s).backward()
             
             
-            optimizer.zero_grad()
-            optimizer_D1.zero_grad()
+            #optimizer.zero_grad()
+            #optimizer_D1.zero_grad()
 
             D_out1_t = model_D1(F.softmax(out32_t).float())
             loss_d1_t = bce_loss(D_out1_t,Variable(torch.FloatTensor(D_out1_t.data.size()).fill_(target_label)).cuda())    
