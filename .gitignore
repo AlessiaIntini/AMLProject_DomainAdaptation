@@ -8,10 +8,13 @@
 
 /checkpoints/latest*
 /checkpoints/best*
-
+/checkpoints/Cityscapes
 /runs/
 
 /model/__pycache__
+/dataset/__pycache__
+/training/__pycache__
+/validation/__pycache__
 /__pycache__
 
 pyvenv.cfg
