@@ -3,8 +3,8 @@
 # -*- encoding: utf-8 -*-
 from model.model_stages import BiSeNet
 from model.discriminator import FCDiscriminator
-from cityscapes import CityScapes
-from GTA5 import GTA5
+from dataset.cityscapes import CityScapes
+from dataset.GTA5 import GTA5
 import torchvision.transforms as transforms
 from torchvision.transforms import v2
 from utils import ExtCompose, ExtResize, ExtToTensor, ExtTransforms, ExtRandomHorizontalFlip , ExtScale , ExtRandomCrop

@@ -2,8 +2,8 @@
 # -*- encoding: utf-8 -*-
 from model.model_stages import BiSeNet
 from model.discriminator import FCDiscriminator
-from cityscapes import CityScapes
-from GTA5 import GTA5
+from dataset.cityscapes import CityScapes
+from dataset.GTA5 import GTA5
 import torchvision.transforms as transforms
 from torchvision.transforms import v2
 from utils import ExtCompose, ExtResize, ExtToTensor, ExtTransforms, ExtRandomHorizontalFlip , ExtScale , ExtRandomCrop, ExtColorJitter
@@ -172,7 +172,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
         #print(epoch)
         lr = poly_lr_scheduler(optimizer, args.learning_rate, iter=epoch, max_iter=args.num_epochs)
 
-        discr_lr = poly_lr_scheduler(optimizer_D1,0.001,iter=epoch,max_iter=args.num_epochs)
+        discr_lr = poly_lr_scheduler(optimizer_D1,args.learning_rate,iter=epoch,max_iter=args.num_epochs)
 
         model.train()
         model_D1.train()
@@ -180,9 +180,9 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
 
         tq = tqdm(total=len(dataloader_source) * args.batch_size)
         tq.set_description('epoch %d, lr %f, lr_discr %f' % (epoch, lr,discr_lr))
-        #print(len(tuple(zip(dataloader_source, dataloader_target))))
+        
         loss_record = []
-        #image_number = random.randint(0, len(dataloader_train) - 1)
+        
         for i, ((src_x, src_y), (trg_x, _)) in enumerate(zip(dataloader_source, dataloader_target)):
             trg_x = trg_x.cuda()
             src_x = src_x.cuda()
@@ -212,8 +212,8 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
             #print(loss)
             #Train with target
 
-            optimizer.zero_grad()
-            optimizer_D1.zero_grad()
+            #optimizer.zero_grad()
+            #optimizer_D1.zero_grad()
 
             with amp.autocast():
                 output_t, out16_t, out32_t = model(trg_x)
