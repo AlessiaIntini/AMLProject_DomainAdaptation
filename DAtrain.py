@@ -240,7 +240,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
             output_t = output_t.detach()
             output_s = output_s.detach()
             with amp.autocast():
-                D_out1_s = model_D1(F.softmax(output_s))
+                D_out1_s = model_D1(F.softmax(output_s,dim=1))
                 loss_d1_s = bce_loss(D_out1_s,torch.FloatTensor(D_out1_s.data.size()).fill_(source_label).cuda())
             
             scaler.scale(loss_d1_s).backward()
@@ -249,7 +249,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
             #optimizer.zero_grad()
             #optimizer_D1.zero_grad()
             with amp.autocast():
-                D_out1_t = model_D1(F.softmax(output_t).float())
+                D_out1_t = model_D1(F.softmax(output_t,dim=1))
                 loss_d1_t = bce_loss(D_out1_t,torch.FloatTensor(D_out1_t.data.size()).fill_(target_label).cuda())    
             
             scaler.scale(loss_d1_t).backward()
