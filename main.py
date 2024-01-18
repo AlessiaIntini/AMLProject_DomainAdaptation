@@ -135,6 +135,10 @@ def parse_args():
                        type=str2bool,
                        default=False,
                        help='Select if you want to resume from best or latest checkpoint')
+    parse.add_argument('--local',
+                        type=str2bool,
+                        default=True,
+                        help='Select if you want to train on local or on colab')
     return parse.parse_args()
 
 CITYSCAPES_CROPSIZE = (512,1024)
@@ -153,15 +157,19 @@ def main():
     print(args.dataset)
     print("Dim batch_size")
     print(args.batch_size)
+    if args.local:
+        initial_path = "."   
+    else:
+        initial_path = "/content"
     if args.dataset == 'CITYSCAPES':
         print('training on CityScapes')
         
         transformations = ExtCompose([ExtResize(CITYSCAPES_CROPSIZE), ExtToTensor()])
         
-        train_dataset = CityScapes(root = "/content/Cityscapes/Cityspaces", split = 'train',transforms=transformations)
+        train_dataset = CityScapes(root = initial_path + "/Cityscapes/Cityspaces", split = 'train',transforms=transformations)
 
         transformations = ExtCompose([ExtToTensor()])
-        val_dataset = CityScapes(root= "/content/Cityscapes/Cityspaces", split='val',transforms=transformations)#eval_transformations)
+        val_dataset = CityScapes(root= initial_path + "/Cityscapes/Cityspaces", split='val',transforms=transformations)#eval_transformations)
 
 
 
