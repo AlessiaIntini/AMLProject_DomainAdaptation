@@ -77,7 +77,7 @@ def parse_args():
     
     parse.add_argument('--batch_size',
                        type=int,
-                       default=4, #2
+                       default=8, #2
                        help='Number of images in each batch')
     parse.add_argument('--learning_rate',
                         type=float,
