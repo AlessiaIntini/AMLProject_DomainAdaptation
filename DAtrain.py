@@ -169,7 +169,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
     source_label = 0
     target_label = 1
     for epoch in range(start_epoch,args.num_epochs):
-        print(epoch)
+        #print(epoch)
         lr = poly_lr_scheduler(optimizer, args.learning_rate, iter=epoch, max_iter=args.num_epochs)
 
         discr_lr = poly_lr_scheduler(optimizer_D1,0.001,iter=epoch,max_iter=args.num_epochs)
@@ -187,7 +187,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
             trg_x = trg_x.cuda()
             src_x = src_x.cuda()
             src_y = src_y.long().cuda()
-            print(i)
+            #print(i)
             optimizer.zero_grad()
             optimizer_D1.zero_grad()
 
@@ -209,7 +209,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
             #scaler.step(optimizer)
             #scaler.update()
 
-            print(loss)
+            #print(loss)
             #Train with target
 
             optimizer.zero_grad()
