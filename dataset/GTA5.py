@@ -8,7 +8,7 @@ from abc import ABCMeta
 from dataclasses import dataclass
 from typing import Tuple, Optional, Any
 from utils import ExtResize, ExtToTensor, ExtTransforms , ExtCompose
-from cityscapes import CityScapes
+from dataset.cityscapes import CityScapes
 class BaseGTALabels(metaclass=ABCMeta):
     pass
 
@@ -134,16 +134,18 @@ class GTA5(torchDataset):
         img = self.read_img(img_path)
         lbl = self.read_img(lbl_path)
         
-        if self.labels_source == "GTA5":
-            lbl = Image.fromarray(np.array(self.convert_from_id_to_trainId(lbl),dtype='uint8')) 
-            #if not os.path.exists(lbl_path.split('.png')[0] + "_labelTrainIds.png"):
-            #    lbl.convert('L').save(lbl_path.split('.png')[0] + "_labelTrainIds.png")
-        
+        lbl = Image.fromarray(np.array(self.convert_from_id_to_trainId(lbl),dtype='uint8'))
+
+        #if self.labels_source == "GTA5":
+        #    lbl = Image.fromarray(np.array(self.convert_from_id_to_trainId(lbl),dtype='uint8')) 
+        #    #if not os.path.exists(lbl_path.split('.png')[0] + "_labelTrainIds.png"):
+        #    #    lbl.convert('L').save(lbl_path.split('.png')[0] + "_labelTrainIds.png")
+        #
         if self.transforms is not None:
             img, lbl = self.transforms(img, lbl)
-        else:
-            img = ExtToTensor()(img)
-            lbl = ExtToTensor()(lbl)
+        #else:
+        #    img = ExtToTensor()(img)
+        #    lbl = ExtToTensor()(lbl)
         return img, lbl
 
     @staticmethod

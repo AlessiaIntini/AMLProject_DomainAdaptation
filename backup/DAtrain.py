@@ -1,11 +1,12 @@
 #!/usr/bin/python
 # -*- encoding: utf-8 -*-
 from model.model_stages import BiSeNet
-from cityscapes import CityScapes
-from GTA5 import GTA5
+from model.discriminator import FCDiscriminator
+from dataset.cityscapes import CityScapes
+from dataset.GTA5 import GTA5
 import torchvision.transforms as transforms
 from torchvision.transforms import v2
-from utils import ExtCompose, ExtResize, ExtToTensor, ExtTransforms, ExtRandomHorizontalFlip , ExtScale , ExtRandomCrop
+from utils import ExtCompose, ExtResize, ExtToTensor, ExtTransforms, ExtRandomHorizontalFlip , ExtScale , ExtRandomCrop, ExtColorJitter
 import torch
 from torch.utils.data import DataLoader, Subset
 import logging
@@ -21,6 +22,9 @@ import os
 from PIL import Image
 from pathlib import Path
 from sklearn.model_selection import train_test_split
+import torch.nn.functional as F
+from torch.autograd import Variable
+
 
 logger = logging.getLogger()
 
@@ -60,6 +64,14 @@ def val(args, model, dataloader, writer = None , epoch = None, step = None):
                 writer.add_image('eval%d/iter%d/correct_eval_labels' % (epoch, i), np.array(colorized_labels), step, dataformats='HWC')
                 writer.add_image('eval%d/iter%d/eval_original _data' % (epoch, i), np.array(data[0].cpu(),dtype='uint8'), step, dataformats='CHW')
 
+                #colorized_predictions.save("/content/results/img"+str(i)+".png")
+                #colorized_labels.save("/content/results/lbl"+str(i)+".png")
+
+                #import matplotlib.pyplot as plt
+                #plt.imshow("/content/results/img"+str(i)+".png")
+                #plt.imshow("/content/results/lbl"+str(i)+".png")
+
+
             predict = predict.squeeze(0)
             predict = reverse_one_hot(predict)
             predict = np.array(predict.cpu())
@@ -92,7 +104,7 @@ def train(args, model, optimizer, dataloader_train, dataloader_val,start_epoch, 
     writer = SummaryWriter(comment=comment)
     scaler = amp.GradScaler()
 
-    loss_func = torch.nn.CrossEntropyLoss(ignore_index=255) #we should check if it's the right index to ignore, is it 255 or 19?
+    loss_func = torch.nn.CrossEntropyLoss(ignore_index=255) 
     max_miou = 0
     step = start_epoch
     for epoch in range(start_epoch,args.num_epochs):
@@ -143,6 +155,139 @@ def train(args, model, optimizer, dataloader_train, dataloader_val,start_epoch, 
             writer.add_scalar('epoch/miou val', miou, epoch)
     #final evaluation
     val(args, model, dataloader_val, writer, epoch, step)
+
+
+def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_source, dataloader_target, dataloader_val, start_epoch, comment=''):
+    #writer = SummaryWriter(comment=''.format(args.optimizer))
+    writer = SummaryWriter(comment=comment)
+    scaler = amp.GradScaler()
+
+    loss_func = torch.nn.CrossEntropyLoss(ignore_index=255) 
+    bce_loss = torch.nn.BCEWithLogitsLoss()
+    max_miou = 0
+    step = start_epoch
+    source_label = 0
+    target_label = 1
+    for epoch in range(start_epoch,args.num_epochs):
+        #print(epoch)
+        lr = poly_lr_scheduler(optimizer, args.learning_rate, iter=epoch, max_iter=args.num_epochs)
+
+        discr_lr = poly_lr_scheduler(optimizer_D1,args.learning_rate,iter=epoch,max_iter=args.num_epochs)
+
+        model.train()
+        model_D1.train()
+
+
+        tq = tqdm(total=len(dataloader_source) * args.batch_size)
+        tq.set_description('epoch %d, lr %f, lr_discr %f' % (epoch, lr,discr_lr))
+        
+        loss_record = []
+        
+        for i, ((src_x, src_y), (trg_x, _)) in enumerate(zip(dataloader_source, dataloader_target)):
+            trg_x = trg_x.cuda()
+            src_x = src_x.cuda()
+            src_y = src_y.long().cuda()
+            #print(i)
+            optimizer.zero_grad()
+            optimizer_D1.zero_grad()
+
+            #Train G
+
+            #Train with source
+            for param in model_D1.parameters():
+                param.requires_grad = False
+
+        
+            with amp.autocast():
+                output_s, out16_s, out32_s = model(src_x)
+                loss1 = loss_func(output_s, src_y.squeeze(1))
+                loss2 = loss_func(out16_s, src_y.squeeze(1))
+                loss3 = loss_func(out32_s, src_y.squeeze(1))
+                loss = loss1 + loss2 + loss3
+
+            scaler.scale(loss).backward()
+            #scaler.step(optimizer)
+            #scaler.update()
+
+            #print(loss)
+            #Train with target
+
+            #optimizer.zero_grad()
+            #optimizer_D1.zero_grad()
+
+            with amp.autocast():
+                output_t, out16_t, out32_t = model(trg_x)
+                
+                D_out1 = model_D1(F.softmax(output_t,dim=1))
+
+                loss_adv_target1 = bce_loss(D_out1,torch.FloatTensor(D_out1.data.size()).fill_(source_label).cuda())
+
+                loss_f = 0.1*loss_adv_target1
+
+            scaler.scale(loss_f).backward()
+            #scaler.step(optimizer)
+            #scaler.update()
+            #print(loss)
+            #Train D
+
+            #optimizer.zero_grad()
+            #optimizer_D1.zero_grad()
+
+
+            for param in model_D1.parameters():
+                param.requires_grad = True
+
+            output_t = output_t.detach()
+            output_s = output_s.detach()
+            with amp.autocast():
+                D_out1_s = model_D1(F.softmax(output_s,dim=1))
+                loss_d1_s = bce_loss(D_out1_s,torch.FloatTensor(D_out1_s.data.size()).fill_(source_label).cuda())
+            
+            scaler.scale(loss_d1_s).backward()
+            
+            
+            #optimizer.zero_grad()
+            #optimizer_D1.zero_grad()
+            with amp.autocast():
+                D_out1_t = model_D1(F.softmax(output_t,dim=1))
+                loss_d1_t = bce_loss(D_out1_t,torch.FloatTensor(D_out1_t.data.size()).fill_(target_label).cuda())    
+            
+            scaler.scale(loss_d1_t).backward()
+            
+            
+            scaler.step(optimizer_D1)
+            scaler.step(optimizer)
+            scaler.update()
+
+
+            tq.update(args.batch_size)
+            tq.set_postfix(loss='%.6f' % loss)
+            step += 1
+            writer.add_scalar('loss_step', loss, step)
+            loss_record.append(loss.item())
+        tq.close()
+        
+        loss_train_mean = np.mean(loss_record)
+        writer.add_scalar('epoch/loss_epoch_train', float(loss_train_mean), epoch)
+        print('loss for train : %f' % (loss_train_mean))
+        if epoch % args.checkpoint_step == 0 and epoch != 0:
+            import os
+            if not os.path.isdir(args.save_model_path):
+                os.mkdir(args.save_model_path)
+            torch.save({'state_dict':model.module.state_dict(),'optimizer_state_dict': optimizer.state_dict()}, os.path.join(args.save_model_path, 'latest_'+str(epoch)+'.pth'))
+
+        if epoch % args.validation_step == 0 and epoch != 0:
+            precision, miou = val(args, model, dataloader_val, writer, epoch, step)
+            if miou > max_miou:
+                max_miou = miou
+                import os
+                os.makedirs(args.save_model_path, exist_ok=True)
+                torch.save(model.module.state_dict(), os.path.join(args.save_model_path, 'best.pth'))
+            writer.add_scalar('epoch/precision_val', precision, epoch)
+            writer.add_scalar('epoch/miou val', miou, epoch)
+    #final evaluation
+    val(args, model, dataloader_val, writer, epoch, step)
+
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -245,10 +390,10 @@ def parse_args():
                        type=str,
                        default='',
                        help='Optional comment to add to the model name and to the log.')
-    #parse.add_argument('--resume',
-    #                   type=bool,
-    #                   default=False,
-    #                   help='Select if you want to resume from the last checkpoint')
+    parse.add_argument('--augmentation',
+                       type=str2bool,
+                       default=False,
+                       help='Select if you want to perform some data augmentation')
     return parse.parse_args()
 
 
@@ -258,45 +403,97 @@ def main():
     ## dataset
     n_classes = args.num_classes
     args.dataset = args.dataset.upper()
- 
-    eval_transformations = ExtCompose([ExtScale(0.5,interpolation=Image.Resampling.BICUBIC), ExtToTensor()])
+    
+    
     print(args.dataset)
     print("Dim batch_size")
     print(args.batch_size)
     if args.dataset == 'CITYSCAPES':
         print('training on CityScapes')
-        cropsize = (512,1024)
+        cropsize = (512,1024) #resize diversa per test
         transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
-        train_dataset = CityScapes(root = "./Cityscapes/Cityspaces", split = 'train',transforms=transformations)
-        val_dataset = CityScapes(root= "./Cityscapes/Cityspaces", split='val',transforms=transformations)#eval_transformations)
+        
+        train_dataset = CityScapes(root = "/content/Cityscapes/Cityspaces", split = 'train',transforms=transformations)
+        val_dataset = CityScapes(root= "/content/Cityscapes/Cityspaces", split='val',transforms=transformations)#eval_transformations)
 
     elif args.dataset == 'GTA5':
         print('training on GTA5')
         cropsize = (720,1280)
-        transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
-        train_dataset_big = GTA5(root = Path(""), transforms=transformations)
+        #eval_transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
+        if args.augmentation:
+            print("Performing data augmentation")
+            transformations = ExtCompose([ExtRandomCrop(cropsize), ExtRandomHorizontalFlip(), ExtToTensor()])
+            train_dataset_big = GTA5(root = Path("/content"), transforms=transformations)
+        else: 
+            transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
+            train_dataset_big = GTA5(root = Path("/content"), transforms=transformations)
+        
         indexes = range(0, len(train_dataset_big))
-        print(train_dataset_big)
+        
         splitting = train_test_split(indexes, train_size = 0.75, random_state = 42, shuffle = True)
         train_indexes = splitting[0]
         val_indexes = splitting[1]
         train_dataset = Subset(train_dataset_big, train_indexes)
         val_dataset = Subset(train_dataset_big, val_indexes)
-    else:
-        print('training on CROSS_DOMAIN, training on GTA5 and validating on CityScapes')
+    elif args.dataset == 'DA':
+        model_D1 = FCDiscriminator(num_classes=args.num_classes)
+        
+        cropsize = (512,1024) #resize diversa per test
+        transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
+        
+        target_dataset = CityScapes(root = "/content/Cityscapes/Cityspaces", split = 'train',transforms=transformations)
+
         cropsize = (720,1280)
-        transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
-        train_dataset = GTA5(root = Path(""), transforms=transformations)
-        cropsize = (512,1024)
-        transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
-        val_dataset = CityScapes(root= "./Cityscapes/Cityspaces", split='val',transforms=transformations) 
-    
-    dataloader_train = DataLoader(train_dataset,
+        transformations = ExtCompose([ExtRandomCrop(cropsize), ExtRandomHorizontalFlip(), ExtColorJitter(0.5,0.5,0.5,0.5), ExtToTensor()])
+        source_dataset = GTA5(root = Path("/content"), transforms=transformations)
+        
+        transformations = ExtCompose([ExtToTensor()])
+        val_dataset = CityScapes(root= "/content/Cityscapes/Cityspaces", split='val',transforms=transformations)#eval_transformations)
+
+        dataloader_source = DataLoader(source_dataset,
                     batch_size=args.batch_size,
                     shuffle=False,
                     num_workers=args.num_workers,
                     pin_memory=False,
                     drop_last=True)
+
+
+        dataloader_target = DataLoader(target_dataset,
+                    batch_size=args.batch_size,
+                    shuffle=False,
+                    num_workers=args.num_workers,
+                    pin_memory=False,
+                    drop_last=True)
+
+        model_D1.train()
+        model_D1.cuda()
+
+        
+
+        optimizer_D1 = torch.optim.Adam(model_D1.parameters(), lr=args.learning_rate, betas=(0.9, 0.99))
+        #optimizer_D1.zero_grad()
+
+
+        bce_loss = torch.nn.BCEWithLogitsLoss()
+
+
+    else:
+        print('training on CROSS_DOMAIN, training on GTA5 and validating on CityScapes')
+        cropsize = (720,1280)
+        transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
+        #transformations = ExtCompose([ExtToTensor()])
+        train_dataset = GTA5(root = Path("/content"), transforms=transformations)
+        cropsize = (512,1024)
+        #transformations = ExtCompose([ExtResize(cropsize), ExtToTensor()])
+        transformations = ExtCompose([ExtToTensor()])
+        val_dataset = CityScapes(root= "/content/Cityscapes/Cityspaces", split='val',transforms=transformations) 
+    
+    #dataloader_train = DataLoader(train_dataset,
+    #                batch_size=args.batch_size,
+    #                shuffle=False,
+    #                num_workers=args.num_workers,
+    #                pin_memory=False,
+    #                drop_last=True)
     dataloader_val = DataLoader(val_dataset,
                        batch_size=1,
                        shuffle=False,
@@ -339,6 +536,7 @@ def main():
             checkpoint = torch.load(pretrain_path)
             model.module.load_state_dict(checkpoint['state_dict'])
             optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            print("Loaded latest checkpoint")
 
 
     
@@ -349,6 +547,8 @@ def main():
         case 'test':
             writer = SummaryWriter(comment="_{}_{}_{}_{}".format(args.mode,args.dataset,args.batch_size,args.learning_rate))
             val(args, model, dataloader_val, writer=writer,epoch=0,step=0)
+        case 'adapt':
+            train_and_adapt(args, model,model_D1, optimizer,optimizer_D1, dataloader_source,dataloader_target, dataloader_val,start_epoch, comment="_{}_{}_{}_{}".format(args.mode,args.dataset,args.batch_size,args.learning_rate))
         case _:
             print('not supported mode \n')
             return None
