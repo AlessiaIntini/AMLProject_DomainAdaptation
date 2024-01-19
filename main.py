@@ -4,7 +4,7 @@ from dataset.cityscapes import CityScapes
 from dataset.GTA5 import GTA5
 import torchvision.transforms as transforms
 from torchvision.transforms import v2
-from utils import ExtCompose, ExtResize, ExtToTensor, ExtTransforms, ExtRandomHorizontalFlip , ExtScale , ExtRandomCrop, ExtColorJitter
+from utils import *
 import torch
 from torch.utils.data import DataLoader, Subset
 import logging
@@ -156,10 +156,10 @@ def main():
     if args.dataset == 'CITYSCAPES':
         print('training on CityScapes')
         
-        transformations = ExtCompose([ExtResize(CITYSCAPES_CROPSIZE), ExtToTensor()])
+        transformations = ExtCompose([ExtResize(CITYSCAPES_CROPSIZE), ExtToTensor(),ExtNormalize(mean=(0.485, 0.456, 0.406))])
         
         train_dataset = CityScapes(root = "/content/Cityscapes/Cityspaces", split = 'train',transforms=transformations)
-
+    
         transformations = ExtCompose([ExtToTensor()])
         val_dataset = CityScapes(root= "/content/Cityscapes/Cityspaces", split='val',transforms=transformations)#eval_transformations)
 
