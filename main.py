@@ -160,7 +160,7 @@ def main():
         
         train_dataset = CityScapes(root = "/content/Cityscapes/Cityspaces", split = 'train',transforms=transformations)
     
-        transformations = ExtCompose([ExtToTensor()])
+        transformations = ExtCompose([ExtToTensor(),ExtNormalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))])
         val_dataset = CityScapes(root= "/content/Cityscapes/Cityspaces", split='val',transforms=transformations)#eval_transformations)
 
 
