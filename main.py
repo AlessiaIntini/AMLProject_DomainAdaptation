@@ -156,7 +156,7 @@ def main():
     if args.dataset == 'CITYSCAPES':
         print('training on CityScapes')
         
-        transformations = ExtCompose([ExtResize(CITYSCAPES_CROPSIZE), ExtToTensor(),ExtNormalize(mean=(0.485, 0.456, 0.406))])
+        transformations = ExtCompose([ExtResize(CITYSCAPES_CROPSIZE), ExtToTensor(),ExtNormalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))])
         
         train_dataset = CityScapes(root = "/content/Cityscapes/Cityspaces", split = 'train',transforms=transformations)
     
