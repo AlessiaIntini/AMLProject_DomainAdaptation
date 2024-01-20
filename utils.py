@@ -328,6 +328,34 @@ class ExtToTensor(ExtTransforms):
     def __call__(self, pic : Image, lbl : Image) -> (torch.Tensor, torch.Tensor):
         return torch.from_numpy( np.array( pic, dtype=np.float32).transpose(2, 0, 1) ), torch.from_numpy( np.array( lbl, dtype=self.target_type) )
 	
+class ExtNormalize(object):
+    """Normalize a tensor image with mean and standard deviation.
+    Given mean: ``(M1,...,Mn)`` and std: ``(S1,..,Sn)`` for ``n`` channels, this transform
+    will normalize each channel of the input ``torch.*Tensor`` i.e.
+    ``input[channel] = (input[channel] - mean[channel]) / std[channel]``
+    Args:
+        mean (sequence): Sequence of means for each channel.
+        std (sequence): Sequence of standard deviations for each channel.
+    """
+
+    def __init__(self, mean, std):
+        self.mean = mean
+        self.std = std
+
+    def __call__(self, tensor, lbl):
+        """
+        Args:
+            tensor (Tensor): Tensor image of size (C, H, W) to be normalized.
+            tensor (Tensor): Tensor of label. A dummy input for ExtCompose
+        Returns:
+            Tensor: Normalized Tensor image.
+            Tensor: Unchanged Tensor label
+        """
+        return F.normalize(tensor, self.mean, self.std), lbl
+
+    def __repr__(self):
+        return self.__class__.__name__ + '(mean={0}, std={1})'.format(self.mean, self.std)
+
 
 class ExtCompose(ExtTransforms):
 
