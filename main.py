@@ -210,7 +210,7 @@ def main():
         target_dataset = CityScapes(root = "/content/Cityscapes/Cityspaces", split = 'train',transforms=transformations)
 
         
-        transformations = ExtCompose([ExtScale(), ExtRandomCrop(GTA_CROPSIZE), ExtRandomHorizontalFlip(), ExtColorJitter(0.5,0.5,0.5,0.5), ExtToTensor()])
+        transformations = ExtCompose([ExtRandomCrop(GTA_CROPSIZE), ExtRandomHorizontalFlip(), ExtColorJitter(0.5,0.5,0.5,0.5), ExtToTensor()])
         source_dataset = GTA5(root = Path("/content"), transforms=transformations)
         
         transformations = ExtCompose([ExtToTensor()])

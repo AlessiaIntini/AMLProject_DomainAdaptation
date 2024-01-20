@@ -28,6 +28,7 @@ from validation.validate import *
 
 logger = logging.getLogger()
 
+LAMBDA = 0.001
 
 def train(args, model, optimizer, dataloader_train, dataloader_val,start_epoch, comment=''):
     #writer = SummaryWriter(comment=''.format(args.optimizer))
@@ -93,7 +94,8 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
     scaler = amp.GradScaler()
 
     loss_func = torch.nn.CrossEntropyLoss(ignore_index=255) 
-    bce_loss = torch.nn.BCEWithLogitsLoss()
+    bce_loss = torch.nn.MSELoss()
+
     max_miou = 0
     step = start_epoch
     source_label = 0
@@ -108,10 +110,11 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
         model_D1.train()
 
 
-        tq = tqdm(total=len(dataloader_source) * args.batch_size)
+        tq = tqdm(total=len(dataloader_target) * args.batch_size)
         tq.set_description('epoch %d, lr %f, lr_discr %f' % (epoch, lr,discr_lr))
         
         loss_record = []
+        loss_discr_record = []
         
         for i, ((src_x, src_y), (trg_x, _)) in enumerate(zip(dataloader_source, dataloader_target)):
             trg_x = trg_x.cuda()
@@ -152,7 +155,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
 
                 loss_adv_target1 = bce_loss(D_out1,torch.FloatTensor(D_out1.data.size()).fill_(source_label).cuda())
 
-                loss_f = 0.1*loss_adv_target1
+                loss_f = LAMBDA*loss_adv_target1
 
             scaler.scale(loss_f).backward()
             #scaler.step(optimizer)
@@ -169,6 +172,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
 
             output_t = output_t.detach()
             output_s = output_s.detach()
+
             with amp.autocast():
                 D_out1_s = model_D1(F.softmax(output_s,dim=1))
                 loss_d1_s = bce_loss(D_out1_s,torch.FloatTensor(D_out1_s.data.size()).fill_(source_label).cuda())
@@ -191,6 +195,9 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
 
 
             tq.update(args.batch_size)
+
+            loss = loss + loss_f
+
             tq.set_postfix(loss='%.6f' % loss)
             step += 1
             writer.add_scalar('loss_step', loss, step)
@@ -205,7 +212,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
             if not os.path.isdir(args.save_model_path):
                 os.mkdir(args.save_model_path)
             torch.save({'state_dict':model.module.state_dict(),'optimizer_state_dict': optimizer.state_dict()}, os.path.join(args.save_model_path, 'latest_'+str(epoch)+'.pth'))
-
+            torch.save({'state_dict':model_D1.module.state_dict(),'optimizer_state_dict': optimizer_D1.state_dict()}, os.path.join(args.save_model_path, 'latest_discr_'+str(epoch)+'.pth'))
         if epoch % args.validation_step == 0 and epoch != 0:
             precision, miou = val(args, model, dataloader_val, writer, epoch, step)
             if miou > max_miou:
