@@ -221,7 +221,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
             if not os.path.isdir(args.save_model_path):
                 os.mkdir(args.save_model_path)
             torch.save({'state_dict':model.module.state_dict(),'optimizer_state_dict': optimizer.state_dict()}, os.path.join(args.save_model_path, 'latest_'+str(epoch)+'.pth'))
-            torch.save({'state_dict':model_D1.module.state_dict(),'optimizer_state_dict': optimizer_D1.state_dict()}, os.path.join(args.save_model_path, 'latest_discr_'+str(epoch)+'.pth'))
+            torch.save({'state_dict':model_D1.state_dict(),'optimizer_state_dict': optimizer_D1.state_dict()}, os.path.join(args.save_model_path, 'latest_discr_'+str(epoch)+'.pth'))
         if epoch % args.validation_step == 0 and epoch != 0:
             precision, miou = val(args, model, dataloader_val, writer, epoch, step)
             if miou > max_miou:
