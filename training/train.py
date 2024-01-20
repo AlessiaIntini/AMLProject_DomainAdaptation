@@ -28,7 +28,7 @@ from validation.validate import *
 
 logger = logging.getLogger()
 
-LAMBDA = 0.001
+LAMBDA = 0.0002
 
 def train(args, model, optimizer, dataloader_train, dataloader_val,start_epoch, comment=''):
     #writer = SummaryWriter(comment=''.format(args.optimizer))
