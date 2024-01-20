@@ -28,7 +28,7 @@ from validation.validate import *
 
 logger = logging.getLogger()
 
-LAMBDA = 0.0002
+LAMBDA = 0.001
 
 def train(args, model, optimizer, dataloader_train, dataloader_val,start_epoch, comment=''):
     #writer = SummaryWriter(comment=''.format(args.optimizer))
@@ -114,7 +114,8 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
         tq.set_description('epoch %d, lr %f, lr_discr %f' % (epoch, lr,discr_lr))
         
         loss_record = []
-        loss_discr_record = []
+        loss_source_record = []
+        loss_target_record = []
         
         for i, ((src_x, src_y), (trg_x, _)) in enumerate(zip(dataloader_source, dataloader_target)):
             trg_x = trg_x.cuda()
@@ -202,11 +203,17 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
             step += 1
             writer.add_scalar('loss_step', loss, step)
             loss_record.append(loss.item())
+            loss_source_record.append(loss_d1_s.item())
+            loss_source_record.append(loss_d1_t.item())
         tq.close()
         
         loss_train_mean = np.mean(loss_record)
+        loss_discr_source_mean = np.mean(loss_source_record)
+        loss_discr_target_mean = np.mean(loss_target_record)
         writer.add_scalar('epoch/loss_epoch_train', float(loss_train_mean), epoch)
         print('loss for train : %f' % (loss_train_mean))
+        print('loss for discriminator source: %f' % (loss_discr_source_mean))
+        print('loss for discriminator target: %f' % (loss_discr_target_mean))
         if epoch % args.checkpoint_step == 0 and epoch != 0:
             import os
             if not os.path.isdir(args.save_model_path):
