@@ -158,6 +158,8 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
 
                 loss_f = LAMBDA*loss_adv_target1
 
+                loss = loss + loss_f
+
             scaler.scale(loss_f).backward()
             #scaler.step(optimizer)
             #scaler.update()
@@ -197,7 +199,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
 
             tq.update(args.batch_size)
 
-            loss = loss + loss_f
+            
 
             tq.set_postfix(loss='%.6f' % loss)
             step += 1
