@@ -165,7 +165,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
             #scaler.update()
             #print(loss)
             #Train D
-
+            loss_record.append(loss.item())
             #optimizer.zero_grad()
             #optimizer_D1.zero_grad()
 
@@ -203,10 +203,10 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
 
             tq.set_postfix(loss='%.6f' % loss)
             step += 1
-            writer.add_scalar('loss_step', loss, step)
-            loss_record.append(loss.item())
+            #writer.add_scalar('loss_step', loss, step)
+            
             loss_source_record.append(loss_d1_s.item())
-            loss_source_record.append(loss_d1_t.item())
+            loss_target_record.append(loss_d1_t.item())
         tq.close()
         
         loss_train_mean = np.mean(loss_record)
