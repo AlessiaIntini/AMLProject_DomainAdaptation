@@ -285,7 +285,7 @@ def main():
     
     start_epoch = 0
     
-    if args.resume:
+    if args.resume and args.dataset != 'DA':
         for check in os.listdir('./checkpoints'):
             if 'latest_' in check:
 
@@ -305,7 +305,31 @@ def main():
             optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             print("Loaded latest checkpoint")
 
+    elif args.resume:
+        for check in os.listdir('./checkpoints'):
+            if 'latest_discr_' in check:
 
+                start_epoch_tmp = int(check.split('_')[2].replace('.pth',''))
+
+                if start_epoch_tmp >= start_epoch:
+                    start_epoch = start_epoch_tmp+1
+                    pretrain_discr_path = "checkpoints/"+check
+                    pretrain_path = "checkpoints/latest_"+str(start_epoch_tmp)+".pth"
+            
+
+        #if args.resume and "latest_" in os.listdir("./checkpoints"):
+        #    model
+
+        if start_epoch > 0:
+            print(pretrain_path)
+            checkpoint = torch.load(pretrain_path)
+            checkpoint_discr = torch.load(pretrain_discr_path)
+            model.module.load_state_dict(checkpoint['state_dict'])
+            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+
+            model_D1.load_state_dict(checkpoint_discr['state_dict'])
+            optimizer_D1.load_state_dict(checkpoint_discr['optimizer_state_dict'])
+            print("Loaded latest checkpoint")
     
     match args.mode:
         case 'train':
