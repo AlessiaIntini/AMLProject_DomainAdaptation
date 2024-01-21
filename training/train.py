@@ -105,7 +105,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
         #print(epoch)
         lr = poly_lr_scheduler(optimizer, args.learning_rate, iter=epoch, max_iter=args.num_epochs)
 
-        discr_lr = poly_lr_scheduler(optimizer_D1,LR_DISCR,iter=epoch,max_iter=args.num_epochs)
+        discr_lr = poly_lr_scheduler(optimizer_D1,args.lr_discr,iter=epoch,max_iter=args.num_epochs)
 
         model.train()
         model_D1.train()
@@ -157,7 +157,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
 
                 loss_adv_target1 = bce_loss(D_out1,torch.FloatTensor(D_out1.data.size()).fill_(source_label).cuda())
 
-                loss_f = LAMBDA*loss_adv_target1
+                loss_f = args.lambda_d1*loss_adv_target1
 
                 loss = loss + loss_f
 

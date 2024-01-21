@@ -135,6 +135,14 @@ def parse_args():
                        type=str2bool,
                        default=False,
                        help='Select if you want to resume from best or latest checkpoint')
+    parse.add_argument('--lr_discr',
+                       type=float,
+                       default=0.0001,
+                       help='Select if you want to resume from best or latest checkpoint')
+    parse.add_argument('--lambda_d1',
+                       type=float,
+                       default=0.001,
+                       help='Select if you want to resume from best or latest checkpoint')
     return parse.parse_args()
 
 CITYSCAPES_CROPSIZE = (512,1024)
@@ -236,7 +244,7 @@ def main():
 
         
 
-        optimizer_D1 = torch.optim.Adam(model_D1.parameters(), lr=0.0001, betas=(0.9, 0.99))
+        optimizer_D1 = torch.optim.Adam(model_D1.parameters(), lr=args.lr_discr, betas=(0.9, 0.99))
 
 
 
