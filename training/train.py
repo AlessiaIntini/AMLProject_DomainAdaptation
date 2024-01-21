@@ -29,6 +29,7 @@ from validation.validate import *
 logger = logging.getLogger()
 
 LAMBDA = 0.001
+LR_DISCR = 0.0001
 
 def train(args, model, optimizer, dataloader_train, dataloader_val,start_epoch, comment=''):
     #writer = SummaryWriter(comment=''.format(args.optimizer))
@@ -94,7 +95,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
     scaler = amp.GradScaler()
 
     loss_func = torch.nn.CrossEntropyLoss(ignore_index=255) 
-    bce_loss = torch.nn.MSELoss()
+    bce_loss = torch.nn.BCEWithLogitsLoss()
 
     max_miou = 0
     step = start_epoch
@@ -104,7 +105,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
         #print(epoch)
         lr = poly_lr_scheduler(optimizer, args.learning_rate, iter=epoch, max_iter=args.num_epochs)
 
-        discr_lr = poly_lr_scheduler(optimizer_D1,args.learning_rate,iter=epoch,max_iter=args.num_epochs)
+        discr_lr = poly_lr_scheduler(optimizer_D1,LR_DISCR,iter=epoch,max_iter=args.num_epochs)
 
         model.train()
         model_D1.train()
