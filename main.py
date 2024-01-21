@@ -137,11 +137,11 @@ def parse_args():
                        help='Select if you want to resume from best or latest checkpoint')
     parse.add_argument('--lr_discr',
                        type=float,
-                       default=0.0001,
+                       default=0.001,
                        help='Select if you want to resume from best or latest checkpoint')
     parse.add_argument('--lambda_d1',
                        type=float,
-                       default=0.001,
+                       default=0.002,
                        help='Select if you want to resume from best or latest checkpoint')
     return parse.parse_args()
 
