@@ -137,7 +137,7 @@ def parse_args():
                        help='Select if you want to resume from best or latest checkpoint')
     parse.add_argument('--lr_discr',
                        type=float,
-                       default=0.001,
+                       default=0.0003,
                        help='Select if you want to resume from best or latest checkpoint')
     parse.add_argument('--lambda_d1',
                        type=float,
@@ -323,12 +323,13 @@ def main():
         if start_epoch > 0:
             print(pretrain_path)
             checkpoint = torch.load(pretrain_path)
+            
             checkpoint_discr = torch.load(pretrain_discr_path)
             model.module.load_state_dict(checkpoint['state_dict'])
             optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-
-            model_D1.load_state_dict(checkpoint_discr['state_dict'])
-            optimizer_D1.load_state_dict(checkpoint_discr['optimizer_state_dict'])
+            if args.dataset == 'DA':
+                model_D1.load_state_dict(checkpoint_discr['state_dict'])
+                optimizer_D1.load_state_dict(checkpoint_discr['optimizer_state_dict'])
             print("Loaded latest checkpoint")
     
     match args.mode:
