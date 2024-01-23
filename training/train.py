@@ -28,6 +28,8 @@ from validation.validate import *
 
 logger = logging.getLogger()
 
+LAMBDA = 0.001
+LR_DISCR = 0.0001
 
 def train(args, model, optimizer, dataloader_train, dataloader_val,start_epoch, comment=''):
     #writer = SummaryWriter(comment=''.format(args.optimizer))
@@ -94,6 +96,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
 
     loss_func = torch.nn.CrossEntropyLoss(ignore_index=255) 
     bce_loss = torch.nn.BCEWithLogitsLoss()
+
     max_miou = 0
     step = start_epoch
     source_label = 0
@@ -102,16 +105,18 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
         #print(epoch)
         lr = poly_lr_scheduler(optimizer, args.learning_rate, iter=epoch, max_iter=args.num_epochs)
 
-        discr_lr = poly_lr_scheduler(optimizer_D1,args.learning_rate,iter=epoch,max_iter=args.num_epochs)
+        discr_lr = poly_lr_scheduler(optimizer_D1,args.lr_discr,iter=epoch,max_iter=args.num_epochs)
 
         model.train()
         model_D1.train()
 
 
-        tq = tqdm(total=len(dataloader_source) * args.batch_size)
+        tq = tqdm(total=len(dataloader_target) * args.batch_size)
         tq.set_description('epoch %d, lr %f, lr_discr %f' % (epoch, lr,discr_lr))
         
         loss_record = []
+        loss_source_record = []
+        loss_target_record = []
         
         for i, ((src_x, src_y), (trg_x, _)) in enumerate(zip(dataloader_source, dataloader_target)):
             trg_x = trg_x.cuda()
@@ -152,14 +157,16 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
 
                 loss_adv_target1 = bce_loss(D_out1,torch.FloatTensor(D_out1.data.size()).fill_(source_label).cuda())
 
-                loss_f = 0.1*loss_adv_target1
+                loss_f = args.lambda_d1*loss_adv_target1
+
+                loss = loss + loss_f
 
             scaler.scale(loss_f).backward()
             #scaler.step(optimizer)
             #scaler.update()
             #print(loss)
             #Train D
-
+            loss_record.append(loss.item())
             #optimizer.zero_grad()
             #optimizer_D1.zero_grad()
 
@@ -169,6 +176,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
 
             output_t = output_t.detach()
             output_s = output_s.detach()
+
             with amp.autocast():
                 D_out1_s = model_D1(F.softmax(output_s,dim=1))
                 loss_d1_s = bce_loss(D_out1_s,torch.FloatTensor(D_out1_s.data.size()).fill_(source_label).cuda())
@@ -191,21 +199,30 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
 
 
             tq.update(args.batch_size)
+
+            
+
             tq.set_postfix(loss='%.6f' % loss)
             step += 1
-            writer.add_scalar('loss_step', loss, step)
-            loss_record.append(loss.item())
+            #writer.add_scalar('loss_step', loss, step)
+            
+            loss_source_record.append(loss_d1_s.item())
+            loss_target_record.append(loss_d1_t.item())
         tq.close()
         
         loss_train_mean = np.mean(loss_record)
+        loss_discr_source_mean = np.mean(loss_source_record)
+        loss_discr_target_mean = np.mean(loss_target_record)
         writer.add_scalar('epoch/loss_epoch_train', float(loss_train_mean), epoch)
         print('loss for train : %f' % (loss_train_mean))
+        print('loss for discriminator source: %f' % (loss_discr_source_mean))
+        print('loss for discriminator target: %f' % (loss_discr_target_mean))
         if epoch % args.checkpoint_step == 0 and epoch != 0:
             import os
             if not os.path.isdir(args.save_model_path):
                 os.mkdir(args.save_model_path)
             torch.save({'state_dict':model.module.state_dict(),'optimizer_state_dict': optimizer.state_dict()}, os.path.join(args.save_model_path, 'latest_'+str(epoch)+'.pth'))
-
+            torch.save({'state_dict':model_D1.state_dict(),'optimizer_state_dict': optimizer_D1.state_dict()}, os.path.join(args.save_model_path, 'latest_discr_'+str(epoch)+'.pth'))
         if epoch % args.validation_step == 0 and epoch != 0:
             precision, miou = val(args, model, dataloader_val, writer, epoch, step)
             if miou > max_miou:

@@ -139,6 +139,14 @@ def parse_args():
                         type=str2bool,
                         default=True,
                         help='Select if you want to train on local or on colab')
+    parse.add_argument('--lr_discr',
+                       type=float,
+                       default=0.0003,
+                       help='Select if you want to resume from best or latest checkpoint')
+    parse.add_argument('--lambda_d1',
+                       type=float,
+                       default=0.002,
+                       help='Select if you want to resume from best or latest checkpoint')
     return parse.parse_args()
 
 CITYSCAPES_CROPSIZE = (512,1024)
@@ -164,11 +172,13 @@ def main():
     if args.dataset == 'CITYSCAPES':
         print('training on CityScapes')
         
-        transformations = ExtCompose([ExtResize(CITYSCAPES_CROPSIZE), ExtToTensor(),ExtNormalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))])
+        #transformations = ExtCompose([ExtResize(CITYSCAPES_CROPSIZE), ExtToTensor()])
+        transformations = ExtCompose([ExtScale(), ExtToTensor()])
         
         train_dataset = CityScapes(root = initial_path + "/Cityscapes/Cityspaces", split = 'train',transforms=transformations)
-    
-        transformations = ExtCompose([ExtToTensor(),ExtNormalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))])
+        #transformations = ExtCompose([ExtToTensor(),ExtNormalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))])
+        #transformations = ExtCompose([ExtToTensor()])
+        transformations = ExtCompose([ExtScale(), ExtToTensor()])
         val_dataset = CityScapes(root= initial_path + "/Cityscapes/Cityspaces", split='val',transforms=transformations)#eval_transformations)
 
 
@@ -178,10 +188,12 @@ def main():
         
         if args.augmentation:
             print("Performing data augmentation")
-            transformations = ExtCompose([ExtRandomCrop(GTA_CROPSIZE), ExtRandomHorizontalFlip(), ExtColorJitter(0.5,0.5,0.5,0.5), ExtToTensor()])
+            #transformations = ExtCompose([ExtRandomCrop(GTA_CROPSIZE), ExtRandomHorizontalFlip(), ExtColorJitter(0.5,0.5,0.5,0.5), ExtToTensor()])
+            transformations = ExtCompose([ExtScale(), ExtRandomCrop(GTA_CROPSIZE), ExtRandomHorizontalFlip(), ExtColorJitter(0.5,0.5,0.5,0.5), ExtToTensor()])
             train_dataset_big = GTA5(root = Path(initial_path), transforms=transformations)
         else: 
-            transformations = ExtCompose([ExtResize(GTA_CROPSIZE), ExtToTensor()])
+            #transformations = ExtCompose([ExtResize(GTA_CROPSIZE), ExtToTensor()])
+            transformations = ExtCompose([ExtScale(), ExtToTensor()])
             train_dataset_big = GTA5(root = Path(initial_path), transforms=transformations)
         
         indexes = range(0, len(train_dataset_big))
@@ -200,7 +212,8 @@ def main():
     elif args.dataset == 'CROSS_DOMAIN':
         print('training on CROSS_DOMAIN, training on GTA5 and validating on CityScapes')
         
-        transformations = ExtCompose([ExtResize(GTA_CROPSIZE), ExtToTensor()])
+        #transformations = ExtCompose([ExtResize(GTA_CROPSIZE), ExtToTensor()])
+        transformations = ExtCompose([ExtScale(), ExtToTensor()])
         train_dataset = GTA5(root = Path(initial_path), transforms=transformations)
         
         transformations = ExtCompose([ExtToTensor()])
@@ -212,7 +225,8 @@ def main():
         model_D1 = FCDiscriminator(num_classes=args.num_classes)
         
          #resize diversa per test
-        transformations = ExtCompose([ExtResize(CITYSCAPES_CROPSIZE), ExtToTensor()]) 
+        #transformations = ExtCompose([ExtResize(CITYSCAPES_CROPSIZE), ExtToTensor()]) 
+        transformations = ExtCompose([ExtScale(), ExtToTensor()]) 
         target_dataset = CityScapes(root = initial_path + "/Cityscapes/Cityspaces", split = 'train',transforms=transformations)
 
         
@@ -242,7 +256,7 @@ def main():
 
         
 
-        optimizer_D1 = torch.optim.Adam(model_D1.parameters(), lr=args.learning_rate, betas=(0.9, 0.99))
+        optimizer_D1 = torch.optim.Adam(model_D1.parameters(), lr=args.lr_discr, betas=(0.9, 0.99))
 
 
 
@@ -283,7 +297,7 @@ def main():
     
     start_epoch = 0
     
-    if args.resume:
+    if args.resume and args.dataset != 'DA':
         for check in os.listdir('./checkpoints'):
             if 'latest_' in check:
 
@@ -297,12 +311,38 @@ def main():
         #    model
 
         if start_epoch > 0:
+            print(pretrain_path)
             checkpoint = torch.load(pretrain_path)
             model.module.load_state_dict(checkpoint['state_dict'])
             optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             print("Loaded latest checkpoint")
 
+    elif args.resume:
+        for check in os.listdir('./checkpoints'):
+            if 'latest_discr_' in check:
 
+                start_epoch_tmp = int(check.split('_')[2].replace('.pth',''))
+
+                if start_epoch_tmp >= start_epoch:
+                    start_epoch = start_epoch_tmp+1
+                    pretrain_discr_path = "checkpoints/"+check
+                    pretrain_path = "checkpoints/latest_"+str(start_epoch_tmp)+".pth"
+            
+
+        #if args.resume and "latest_" in os.listdir("./checkpoints"):
+        #    model
+
+        if start_epoch > 0:
+            print(pretrain_path)
+            checkpoint = torch.load(pretrain_path)
+            
+            checkpoint_discr = torch.load(pretrain_discr_path)
+            model.module.load_state_dict(checkpoint['state_dict'])
+            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            if args.dataset == 'DA':
+                model_D1.load_state_dict(checkpoint_discr['state_dict'])
+                optimizer_D1.load_state_dict(checkpoint_discr['optimizer_state_dict'])
+            print("Loaded latest checkpoint")
     
     match args.mode:
         case 'train':
