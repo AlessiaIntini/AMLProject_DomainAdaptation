@@ -179,10 +179,10 @@ def main():
         if args.augmentation:
             print("Performing data augmentation")
             transformations = ExtCompose([ExtRandomCrop(GTA_CROPSIZE), ExtRandomHorizontalFlip(), ExtColorJitter(0.5,0.5,0.5,0.5), ExtToTensor()])
-            train_dataset_big = GTA5(root = Path("/content"), transforms=transformations)
+            train_dataset_big = GTA5(root = Path(initial_path), transforms=transformations)
         else: 
             transformations = ExtCompose([ExtResize(GTA_CROPSIZE), ExtToTensor()])
-            train_dataset_big = GTA5(root = Path("/content"), transforms=transformations)
+            train_dataset_big = GTA5(root = Path(initial_path), transforms=transformations)
         
         indexes = range(0, len(train_dataset_big))
         
@@ -193,7 +193,7 @@ def main():
 
         if args.augmentation:
             transformations = ExtCompose([ExtToTensor()])
-            val_dataset = CityScapes(root= "/content/Cityscapes/Cityspaces", split='val',transforms=transformations)
+            val_dataset = CityScapes(root= initial_path + "/Cityscapes/Cityspaces", split='val',transforms=transformations)
         else:
             val_dataset = Subset(train_dataset_big, val_indexes)
 
@@ -201,10 +201,10 @@ def main():
         print('training on CROSS_DOMAIN, training on GTA5 and validating on CityScapes')
         
         transformations = ExtCompose([ExtResize(GTA_CROPSIZE), ExtToTensor()])
-        train_dataset = GTA5(root = Path("/content"), transforms=transformations)
+        train_dataset = GTA5(root = Path(initial_path), transforms=transformations)
         
         transformations = ExtCompose([ExtToTensor()])
-        val_dataset = CityScapes(root= "/content/Cityscapes/Cityspaces", split='val',transforms=transformations) 
+        val_dataset = CityScapes(root= initial_path + "/Cityscapes/Cityspaces", split='val',transforms=transformations) 
     
 
 
@@ -213,14 +213,14 @@ def main():
         
          #resize diversa per test
         transformations = ExtCompose([ExtResize(CITYSCAPES_CROPSIZE), ExtToTensor()]) 
-        target_dataset = CityScapes(root = "/content/Cityscapes/Cityspaces", split = 'train',transforms=transformations)
+        target_dataset = CityScapes(root = initial_path + "/Cityscapes/Cityspaces", split = 'train',transforms=transformations)
 
         
         transformations = ExtCompose([ExtRandomCrop(GTA_CROPSIZE), ExtRandomHorizontalFlip(), ExtColorJitter(0.5,0.5,0.5,0.5), ExtToTensor()])
-        source_dataset = GTA5(root = Path("/content"), transforms=transformations)
+        source_dataset = GTA5(root = Path(initial_path), transforms=transformations)
         
         transformations = ExtCompose([ExtToTensor()])
-        val_dataset = CityScapes(root= "/content/Cityscapes/Cityspaces", split='val',transforms=transformations)
+        val_dataset = CityScapes(root= initial_path + "/Cityscapes/Cityspaces", split='val',transforms=transformations)
 
         dataloader_source = DataLoader(source_dataset,
                     batch_size=args.batch_size,
