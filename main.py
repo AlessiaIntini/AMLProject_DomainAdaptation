@@ -172,13 +172,12 @@ def main():
     if args.dataset == 'CITYSCAPES':
         print('training on CityScapes')
         
-        #transformations = ExtCompose([ExtResize(CITYSCAPES_CROPSIZE), ExtToTensor()])
-        transformations = ExtCompose([ExtScale(), ExtToTensor()])
+        transformations = ExtCompose([ExtResize(CITYSCAPES_CROPSIZE), ExtToTensor(),ExtNormalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))])
+        #transformations = ExtCompose([ExtScale(0.5), ExtToTensor()])
         
         train_dataset = CityScapes(root = initial_path + "/Cityscapes/Cityspaces", split = 'train',transforms=transformations)
-        #transformations = ExtCompose([ExtToTensor(),ExtNormalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))])
+        transformations = ExtCompose([ExtToTensor(),ExtNormalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))])
         #transformations = ExtCompose([ExtToTensor()])
-        transformations = ExtCompose([ExtScale(), ExtToTensor()])
         val_dataset = CityScapes(root= initial_path + "/Cityscapes/Cityspaces", split='val',transforms=transformations)#eval_transformations)
 
 

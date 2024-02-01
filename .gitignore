@@ -8,7 +8,8 @@
 
 /checkpoints/latest*
 /checkpoints/best*
-/checkpoints/Cityscapes
+/checkpoints/Cityscape*
+/checkpoints/Domain*
 /runs/
 
 /model/__pycache__
