@@ -251,8 +251,8 @@ def main():
                     pin_memory=False,
                     drop_last=True)
 
-        model_D1.train()
         model_D1.cuda()
+        model_D1.train()
 
         
 
