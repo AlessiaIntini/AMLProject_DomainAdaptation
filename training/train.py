@@ -86,7 +86,9 @@ def train(args, model, optimizer, dataloader_train, dataloader_val,start_epoch, 
             writer.add_scalar('epoch/precision_val', precision, epoch)
             writer.add_scalar('epoch/miou val', miou, epoch)
     #final evaluation
-    val(args, model, dataloader_val, writer, epoch, step)
+    precision, miou = val(args, model, dataloader_val, writer, epoch, step)
+    writer.add_scalar('epoch/precision_val', precision, epoch)
+    writer.add_scalar('epoch/miou val', miou, epoch)
 
 
 def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_source, dataloader_target, dataloader_val, start_epoch, comment=''):

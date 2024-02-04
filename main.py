@@ -160,8 +160,6 @@ def main():
     n_classes = args.num_classes
     args.dataset = args.dataset.upper()
     
-
-    
     print(args.dataset)
     print("Dim batch_size")
     print(args.batch_size)
