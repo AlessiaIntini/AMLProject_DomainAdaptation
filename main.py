@@ -190,21 +190,25 @@ def main():
             transformations = ExtCompose([ExtScale(), ExtRandomCrop(GTA_CROPSIZE), ExtRandomHorizontalFlip(), ExtColorJitter(0.5,0.5,0.5,0.5), ExtToTensor()])
             train_dataset_big = GTA5(root = Path(initial_path), transforms=transformations)
         else: 
-            #transformations = ExtCompose([ExtResize(GTA_CROPSIZE), ExtToTensor()])
-            transformations = ExtCompose([ExtScale(), ExtToTensor()])
+            transformations = ExtCompose([ExtResize(GTA_CROPSIZE), ExtToTensor()])
+            #transformations = ExtCompose([ExtScale(), ExtToTensor()])
             train_dataset_big = GTA5(root = Path(initial_path), transforms=transformations)
         
         indexes = range(0, len(train_dataset_big))
         
         splitting = train_test_split(indexes, train_size = 0.75, random_state = 42, shuffle = True)
         train_indexes = splitting[0]
-        val_indexes = splitting[1]
         train_dataset = Subset(train_dataset_big, train_indexes)
 
         if args.augmentation:
             transformations = ExtCompose([ExtToTensor()])
             val_dataset = CityScapes(root= initial_path + "/Cityscapes/Cityspaces", split='val',transforms=transformations)
         else:
+            transformations = ExtCompose([ExtToTensor()])
+            train_dataset_big = GTA5(root = Path(initial_path), transforms=transformations)
+            indexes = range(0, len(train_dataset_big))
+            splitting = train_test_split(indexes, train_size = 0.75, random_state = 42, shuffle = True)
+            val_indexes = splitting[1]
             val_dataset = Subset(train_dataset_big, val_indexes)
 
     elif args.dataset == 'CROSS_DOMAIN':
