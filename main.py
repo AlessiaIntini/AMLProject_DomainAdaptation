@@ -190,8 +190,8 @@ def main():
             transformations = ExtCompose([ExtScale(), ExtRandomCrop(GTA_CROPSIZE), ExtRandomHorizontalFlip(), ExtColorJitter(0.5,0.5,0.5,0.5), ExtToTensor()])
             train_dataset_big = GTA5(root = Path(initial_path), transforms=transformations)
         else: 
-            transformations = ExtCompose([ExtResize(GTA_CROPSIZE), ExtToTensor()])
-            #transformations = ExtCompose([ExtScale(), ExtToTensor()])
+            #transformations = ExtCompose([ExtResize(GTA_CROPSIZE), ExtToTensor()])
+            transformations = ExtCompose([ExtScale(0.5), ExtToTensor()])
             train_dataset_big = GTA5(root = Path(initial_path), transforms=transformations)
         
         indexes = range(0, len(train_dataset_big))
