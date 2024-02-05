@@ -9,6 +9,7 @@
 /checkpoints/latest*
 /checkpoints/best*
 /checkpoints/Cityscape*
+/checkpoints/GTA5*
 /checkpoints/Domain*
 /runs/
 
