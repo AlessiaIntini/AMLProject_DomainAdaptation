@@ -36,7 +36,7 @@ def main():
     args.dataset = args.dataset.upper()
     
     print("Dataset " + args.dataset)
-    print("Dim batch_size " + args.batch_size)
+    print("Dim batch_size " + str(args.batch_size))
     print("Optimizer is " + args.optimizer)
 
     if args.local:
