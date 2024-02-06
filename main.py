@@ -287,6 +287,7 @@ def main():
 
     ## optimizer
     # build optimizer
+    print("Optimizer is" + args.optimizer)
     if args.optimizer == 'rmsprop':
         optimizer = torch.optim.RMSprop(model.parameters(), args.learning_rate)
     elif args.optimizer == 'sgd':
