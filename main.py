@@ -24,10 +24,6 @@ from sklearn.model_selection import train_test_split
 from training.train import *
 from validation.validate import *
 
-
-
-
-
 CITYSCAPES_CROPSIZE = (512,1024)
 GTA_CROPSIZE = (720,1280)
 
@@ -39,9 +35,10 @@ def main():
     n_classes = args.num_classes
     args.dataset = args.dataset.upper()
     
-    print(args.dataset)
-    print("Dim batch_size")
-    print(args.batch_size)
+    print("Dataset " + args.dataset)
+    print("Dim batch_size " + args.batch_size)
+    print("Optimizer is " + args.optimizer)
+
     if args.local:
         initial_path = "."   
     else:
@@ -135,11 +132,15 @@ def main():
         model_D1.cuda()
         model_D1.train()
 
-        
-
-        optimizer_D1 = torch.optim.Adam(model_D1.parameters(), lr=args.lr_discr, betas=(0.9, 0.99))
-
-
+        if args.optimizer == 'rmsprop':
+            optimizer_D1 = torch.optim.RMSprop(model_D1.parameters(), lr=args.lr_discr)
+        elif args.optimizer == 'sgd':
+            optimizer_D1 = torch.optim.SGD(model_D1.parameters(), lr=args.lr_discr, momentum=0.9, weight_decay=1e-4)
+        elif args.optimizer == 'adam':
+            optimizer_D1 = torch.optim.Adam(model_D1.parameters(), lr=args.lr_discr)
+        else:  # rmsprop
+            print('not supported optimizer \n')
+            return None
 
     else:
         print("Error, select a valid dataset")
@@ -166,7 +167,7 @@ def main():
 
     ## optimizer
     # build optimizer
-    print("Optimizer is" + args.optimizer)
+    
     if args.optimizer == 'rmsprop':
         optimizer = torch.optim.RMSprop(model.parameters(), args.learning_rate)
     elif args.optimizer == 'sgd':
