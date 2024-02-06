@@ -18,6 +18,7 @@
 /dataset/__pycache__
 /training/__pycache__
 /validation/__pycache__
+/options/__pycache__
 /__pycache__
 
 pyvenv.cfg
