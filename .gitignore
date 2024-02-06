@@ -11,6 +11,7 @@
 /checkpoints/Cityscape*
 /checkpoints/GTA5*
 /checkpoints/Domain*
+/checkpoints/DA*
 /runs/
 
 /model/__pycache__
