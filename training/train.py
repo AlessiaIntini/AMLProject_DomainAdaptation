@@ -53,6 +53,9 @@ def train(args, model, optimizer, dataloader_train, dataloader_val,start_epoch, 
             data = data.cuda()
             label = label.long().cuda()
             optimizer.zero_grad()
+            data_visualize,label_visualize = CityScapes.visualize_prediction(model(data)[0], label)
+            writer.add_image('eval%d/iter%d/data_visualize' % (epoch, i), np.array(data_visualize), step, dataformats='HWC')
+            writer.add_image('eval%d/iter%d/label_visualize' % (epoch, i), np.array(label_visualize), step, dataformats='HWC')
             with amp.autocast():
                 output, out16, out32 = model(data)
                 loss1 = loss_func(output, label.squeeze(1))
@@ -283,9 +286,13 @@ def train_improvements(args, model, model_D1, optimizer,optimizer_D1, dataloader
                 
        
             # 1. source to target, target to target
-            src_in_trg = FDA_source_to_target( src_x, trg_x, L=0.01 )            # src_lbl
-            trg_in_trg = trg_x            # trg, trg_lbl
             
+            src_in_trg = FDA_source_to_target( src_x, trg_x, L=0.01 )            # src_lbl
+            src_x_visualize,src_y_visualize = GTA5.visualize_prediction(src_x, src_y)
+            writer.add_image('eval%d/iter%d/predicted_eval_labels' % (epoch, i), np.array(src_x_visualize), step, dataformats='HWC')
+            writer.add_image('eval%d/iter%d/correct_eval_labels' % (epoch, i), np.array(src_y_visualize), step, dataformats='HWC')
+
+            trg_in_trg = trg_x            # trg, trg_lbl
             
             
             # 2. subtract mean

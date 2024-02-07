@@ -149,7 +149,7 @@ def main():
          #resize diversa per test
         #transformations = ExtCompose([ExtResize(CITYSCAPES_CROPSIZE), ExtToTensor()]) 
         transformations = ExtCompose([ExtRandomCrop(GTA_CROPSIZE), ExtToTensor()]) 
-        target_dataset = CityScapes(root = initial_path + "/Cityscapes/Cityspaces", split = 'train',transforms=transformations)
+        target_dataset = CityScapes(root = initial_path + "/Cityscapes/Cityspaces", split = 'val',transforms=transformations)
 
         
         transformations = ExtCompose([ExtRandomCrop(GTA_CROPSIZE), ExtRandomHorizontalFlip(), ExtColorJitter(0.5,0.5,0.5,0.5), ExtToTensor()])
@@ -281,7 +281,7 @@ def main():
         case 'adapt':
             train_and_adapt(args, model,model_D1, optimizer,optimizer_D1, dataloader_source,dataloader_target, dataloader_val,start_epoch, comment="_{}_{}_{}_{}".format(args.mode,args.dataset,args.batch_size,args.learning_rate))
         case 'improvements':
-            train_improvements(args, model,model_D1, optimizer,optimizer_D1, dataloader_source,dataloader_target, dataloader_val,start_epoch, comment="_{}_{}_{}_{}".format(args.mode,args.dataset,args.batch_size,args.learning_rate))    
+            train_and_adapt(args, model,model_D1, optimizer,optimizer_D1, dataloader_source,dataloader_target, dataloader_val,start_epoch, comment="_{}_{}_{}_{}".format(args.mode,args.dataset,args.batch_size,args.learning_rate))    
         case _:
             print('not supported mode \n')
             return None
