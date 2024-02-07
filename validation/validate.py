@@ -46,7 +46,7 @@ def val(args, model, dataloader, writer = None , epoch = None, step = None):
             predict, _, _ = model(data)
             
             if i in random_sample and writer is not None:
-                if args.dataset == 'CITYSCAPES' or args.dataset == 'DA' or args.dataset == 'CROSS_DOMAIN' or args.augmentation:
+                if args.dataset == 'CITYSCAPES' or args.dataset == 'DA' or args.dataset == 'CROSS_DOMAIN' or args.augmentation or args.dataset == 'FDA' :
                     colorized_predictions , colorized_labels = CityScapes.visualize_prediction(predict, label)
                 elif args.dataset == 'GTA5':
                     colorized_predictions , colorized_labels = GTA5.visualize_prediction(predict, label)

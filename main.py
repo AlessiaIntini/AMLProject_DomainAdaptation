@@ -129,8 +129,52 @@ def main():
                     pin_memory=False,
                     drop_last=True)
 
-        model_D1.cuda()
         model_D1.train()
+        model_D1.cuda()
+
+        if args.optimizer == 'rmsprop':
+            optimizer_D1 = torch.optim.RMSprop(model_D1.parameters(), lr=args.lr_discr)
+        elif args.optimizer == 'sgd':
+            optimizer_D1 = torch.optim.SGD(model_D1.parameters(), lr=args.lr_discr, momentum=0.9, weight_decay=1e-4)
+        elif args.optimizer == 'adam':
+            optimizer_D1 = torch.optim.Adam(model_D1.parameters(), lr=args.lr_discr)
+        else:  # rmsprop
+            print('not supported optimizer \n')
+            return None
+
+    elif args.dataset == 'FDA':
+        print('training on FDA')
+        model_D1 = FCDiscriminator(num_classes=args.num_classes)
+        
+         #resize diversa per test
+        #transformations = ExtCompose([ExtResize(CITYSCAPES_CROPSIZE), ExtToTensor()]) 
+        transformations = ExtCompose([ExtRandomCrop(GTA_CROPSIZE), ExtToTensor()]) 
+        target_dataset = CityScapes(root = initial_path + "/Cityscapes/Cityspaces", split = 'train',transforms=transformations)
+
+        
+        transformations = ExtCompose([ExtRandomCrop(GTA_CROPSIZE), ExtRandomHorizontalFlip(), ExtColorJitter(0.5,0.5,0.5,0.5), ExtToTensor()])
+        source_dataset = GTA5(root = Path(initial_path), transforms=transformations)
+        
+        transformations = ExtCompose([ExtToTensor()])
+        val_dataset = CityScapes(root= initial_path + "/Cityscapes/Cityspaces", split='val',transforms=transformations)
+
+        dataloader_source = DataLoader(source_dataset,
+                    batch_size=args.batch_size,
+                    shuffle=True,
+                    num_workers=args.num_workers,
+                    pin_memory=False,
+                    drop_last=True)
+
+
+        dataloader_target = DataLoader(target_dataset,
+                    batch_size=args.batch_size,
+                    shuffle=True,
+                    num_workers=args.num_workers,
+                    pin_memory=False,
+                    drop_last=True)
+
+        model_D1.train()
+        model_D1.cuda()
 
         if args.optimizer == 'rmsprop':
             optimizer_D1 = torch.optim.RMSprop(model_D1.parameters(), lr=args.lr_discr)
@@ -146,7 +190,7 @@ def main():
         print("Error, select a valid dataset")
         return None
     
-    if args.dataset != 'DA':
+    if args.dataset != 'DA' and args.dataset != 'FDA':
         dataloader_train = DataLoader(train_dataset,
                         batch_size=args.batch_size,
                         shuffle=True,
@@ -236,6 +280,8 @@ def main():
             val(args, model, dataloader_val, writer=writer,epoch=0,step=0)
         case 'adapt':
             train_and_adapt(args, model,model_D1, optimizer,optimizer_D1, dataloader_source,dataloader_target, dataloader_val,start_epoch, comment="_{}_{}_{}_{}".format(args.mode,args.dataset,args.batch_size,args.learning_rate))
+        case 'improvements':
+            train_improvements(args, model,model_D1, optimizer,optimizer_D1, dataloader_source,dataloader_target, dataloader_val,start_epoch, comment="_{}_{}_{}_{}".format(args.mode,args.dataset,args.batch_size,args.learning_rate))    
         case _:
             print('not supported mode \n')
             return None

@@ -91,7 +91,7 @@ def parse_args():
     parse.add_argument('--dataset',
                           type=str,
                           default='CityScapes',
-                          help='CityScapes, GTA5 or CROSS_DOMAIN. Define on which dataset the model should be trained and evaluated.')
+                          help='CityScapes, GTA5, CROSS_DOMAIN, DA or FDA . Define on which dataset the model should be trained and evaluated.')
     parse.add_argument('--resume_model_path',
                        type=str,
                        default='',
