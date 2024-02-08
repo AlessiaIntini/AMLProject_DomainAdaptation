@@ -112,7 +112,7 @@ def main():
         
          #resize diversa per test
         #transformations = ExtCompose([ExtResize(CITYSCAPES_CROPSIZE), ExtToTensor()]) 
-        transformations = ExtCompose([ExtScale(), ExtToTensor()]) 
+        transformations = ExtCompose([ExtRandomCrop(GTA_CROPSIZE), ExtToTensor()]) 
         target_dataset = CityScapes(root = initial_path + "/Cityscapes/Cityspaces", split = 'train',transforms=transformations)
 
         
