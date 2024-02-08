@@ -27,7 +27,15 @@ from validation.validate import *
 CITYSCAPES_CROPSIZE = (512,1024)
 GTA_CROPSIZE = (720,1280)
 
+#def collate_fn(batch):
+    # Estrai solo i vettori target da ogni elemento nel batch
+   # targets = [item[1] for item in batch]
 
+    # Converti la lista di target in un tensore PyTorch
+   # targets = torch.stack(targets, dim=0)
+
+   # return targets
+    
 def main():
     args = parse_args()
 
@@ -112,7 +120,7 @@ def main():
         source_dataset = GTA5(root = Path(initial_path), transforms=transformations)
         
         transformations = ExtCompose([ExtToTensor()])
-        val_dataset = CityScapes(root= initial_path + "/Cityscapes/Cityspaces", split='val',transforms=transformations)
+        val_dataset = CityScapes(root= initial_path + "/Cityscapes/Cityspaces", split='train',transforms=transformations)
 
         dataloader_source = DataLoader(source_dataset,
                     batch_size=args.batch_size,
@@ -149,15 +157,15 @@ def main():
          #resize diversa per test
         #transformations = ExtCompose([ExtResize(CITYSCAPES_CROPSIZE), ExtToTensor()]) 
         transformations = ExtCompose([ExtRandomCrop(GTA_CROPSIZE), ExtToTensor()]) 
-        target_dataset = CityScapes(root = initial_path + "/Cityscapes/Cityspaces", split = 'val',transforms=transformations)
+        target_dataset = CityScapes(root = initial_path + "/Cityscapes/Cityspaces", split = 'train',transforms=transformations)
 
         
         transformations = ExtCompose([ExtRandomCrop(GTA_CROPSIZE), ExtRandomHorizontalFlip(), ExtColorJitter(0.5,0.5,0.5,0.5), ExtToTensor()])
         source_dataset = GTA5(root = Path(initial_path), transforms=transformations)
         
         transformations = ExtCompose([ExtToTensor()])
-        val_dataset = CityScapes(root= initial_path + "/Cityscapes/Cityspaces", split='val',transforms=transformations)
-
+        val_dataset = CityScapes(root= initial_path + "/Cityscapes/Cityspaces", split='train',transforms=transformations)
+    
         dataloader_source = DataLoader(source_dataset,
                     batch_size=args.batch_size,
                     shuffle=True,
@@ -224,7 +232,7 @@ def main():
     
     start_epoch = 0
     
-    if args.resume and args.dataset != 'DA':
+    if args.resume and args.dataset != 'DA' and args.dataset != 'FDA':
         for check in os.listdir('./checkpoints'):
             if 'latest_' in check:
 
@@ -281,7 +289,7 @@ def main():
         case 'adapt':
             train_and_adapt(args, model,model_D1, optimizer,optimizer_D1, dataloader_source,dataloader_target, dataloader_val,start_epoch, comment="_{}_{}_{}_{}".format(args.mode,args.dataset,args.batch_size,args.learning_rate))
         case 'improvements':
-            train_and_adapt(args, model,model_D1, optimizer,optimizer_D1, dataloader_source,dataloader_target, dataloader_val,start_epoch, comment="_{}_{}_{}_{}".format(args.mode,args.dataset,args.batch_size,args.learning_rate))    
+            train_improvements(args, model,model_D1, optimizer,optimizer_D1, dataloader_source,dataloader_target, dataloader_val,start_epoch, comment="_{}_{}_{}_{}".format(args.mode,args.dataset,args.batch_size,args.learning_rate))    
         case _:
             print('not supported mode \n')
             return None

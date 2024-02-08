@@ -610,44 +610,78 @@ class ExtRandomCrop(object):
         return self.__class__.__name__ + '(size={0}, padding={1})'.format(self.size, self.padding)
 
 #--------------------------------------------------------------------------------FDA--------------------------------------------------------------------------------------------#
-def extract_ampl_phase(fft_im):
+def extract_ampl_phase(fft_re, fft_im):
     # fft_im: size should be bx3xhxwx2
-    fft_amp = fft_im[:,:,:,0]**2 + fft_im[:,:,:,1]**2
+  
+    fft_amp = fft_re**2 + fft_im**2
     fft_amp = torch.sqrt(fft_amp)
-    fft_pha =torch.atan2(torch.tensor( fft_im[:,:,:,1],dtype=torch.float64), torch.tensor(fft_im[:,:,:,0],dtype=torch.float64))
+   # fft_pha =torch.atan2(torch.tensor( fft_im[:,:,:,1],dtype=torch.float64), torch.tensor(fft_im[:,:,:,0],dtype=torch.float64))
+    #fft_pha = torch.atan2(fft_im[:,:,:,1], fft_im[:,:,:,0])
+    fft_complex = torch.complex(fft_re, fft_im)
+    fft_pha = torch.angle(fft_complex)
     return fft_amp, fft_pha
 
-def low_freq_mutate( amp_src, amp_trg, L=0.1 ):
-    _, h, w = amp_src.size()
+def low_freq_mutate( amp_src, amp_trg, L=0.001 ):
+    _, _, h, w = amp_src.size()
+    y, x = np.ogrid[:h, :w]
+    center = (h // 2, w // 2)
+    mask = np.sqrt((x - center[1])**2 + (y - center[0])**2) <= (np.amin((h,w))*L)
+
+    for channel in range(amp_src.shape[1]):
+        amp_src[:,channel,mask] = amp_trg[:,channel,mask]
+
+    '''_,_, h, w = amp_src.size()
     b = (  np.floor(np.amin((h,w))*L)  ).astype(int)     # get b
-    amp_src[:,0:b,0:b]     = amp_trg[:,0:b,0:b]      # top left
-    amp_src[:,0:b,w-b:w]   = amp_trg[:,0:b,w-b:w]    # top right
-    amp_src[:,h-b:h,0:b]   = amp_trg[:,h-b:h,0:b]    # bottom left
-    amp_src[:,h-b:h,w-b:w] = amp_trg[:,h-b:h,w-b:w]  # bottom right
+
+    phase_src = torch.angle(amp_src)
+    phase_trg = torch.angle(amp_trg)
+
+    # Replace the amplitude of the source image frequencies with the target ones
+    amp_src = torch.abs(amp_trg) * torch.exp(1j * phase_src)
+    amp_trg = torch.abs(amp_trg) * torch.exp(1j * phase_trg)
+    
+    amp_src[:,:,0:b,0:b]     = amp_trg[:,:,0:b,0:b]      # top left
+    amp_src[:,:,0:b,w-b:w]   = amp_trg[:,:,0:b,w-b:w]    # top right
+    amp_src[:,:,h-b:h,0:b]   = amp_trg[:,:,h-b:h,0:b]    # bottom left
+    amp_src[:,:,h-b:h,w-b:w] = amp_trg[:,:,h-b:h,w-b:w]  # bottom right
+    '''
+
     return amp_src
 
-def FDA_source_to_target(src_img, trg_img, L=0.1):
+def FDA_source_to_target(src_img, trg_img, L=0.001):
     # exchange magnitude
     # input: src_img, trg_img
 
     # get fft of both source and target
-    fft_src = torch.fft.rfft( src_img.clone())#, n=2) 
-    fft_trg = torch.fft.rfft( trg_img.clone())#, n=2)
+    fft_src_result = torch.fft.fftn( src_img,dim=(-4,-3,-2,-1))#, n=2) 
+    fft_re=fft_src_result.real
+    fft_im=fft_src_result.imag
+    fft_trg_result = torch.fft.fftn( trg_img,dim=(-4,-3,-2,-1))#, n=2)
+    fft_trg_re=fft_trg_result.real
+    fft_trg_im=fft_trg_result.imag
 
     # extract amplitude and phase of both ffts
-    amp_src, pha_src = extract_ampl_phase( fft_src.clone())
-    amp_trg, pha_trg = extract_ampl_phase( fft_trg.clone())
+    amp_src, pha_src = extract_ampl_phase( fft_re.clone(),fft_im.clone())#fft_src.clone())
+    amp_trg, pha_trg = extract_ampl_phase( fft_trg_re.clone(),fft_trg_im.clone())#fft_trg.clone())
 
     # replace the low frequency amplitude part of source with that from target
-    amp_src_ = low_freq_mutate( amp_src.clone(), amp_trg.clone(), L=L )
-
+    amp_src_ = low_freq_mutate( amp_src, amp_trg, L=L )
+    #print("amp_src_",amp_src_.shape)
     # recompose fft of source
-    fft_src_ = torch.zeros( fft_src.size(), dtype=torch.float )
-    fft_src_[:,:,:,0] = torch.cos(pha_src.clone()) * amp_src_.clone()
-    fft_src_[:,:,:,1] = torch.sin(pha_src.clone()) * amp_src_.clone()
-
+    fft_src_ = torch.zeros( fft_src_result.size(), dtype=torch.complex64)
+    #print("values of pha_src and amp_src_")
+    #print(pha_src.shape)
+    #print(amp_src_.shape)
+    
+    fft_src_.real = torch.cos(pha_src.clone()) * amp_src_.clone()
+    fft_src_.imag = torch.sin(pha_src.clone()) * amp_src_.clone()
+    fft_src_=torch.complex(fft_src_.real,fft_src_.imag)
     # get the recomposed image: source content, target style
     _, _, imgH, imgW = src_img.size()
-    src_in_trg = torch.fft.irfft( fft_src_ )
-
+    #src_in_trg = torch.fft.ifftn( fft_src_ )
+    src_in_trg = torch.fft.ifftn( fft_src_,dim=(-4,-3,-2,-1) ).real
+    src_in_trg -= torch.min(src_in_trg)
+    src_in_trg /= torch.max(src_in_trg)
+   
+    #print("src_in_trg",src_in_trg.shape)
     return src_in_trg

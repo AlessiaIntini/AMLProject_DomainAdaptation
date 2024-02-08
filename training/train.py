@@ -50,12 +50,16 @@ def train(args, model, optimizer, dataloader_train, dataloader_val,start_epoch, 
         loss_record = []
         #image_number = random.randint(0, len(dataloader_train) - 1)
         for i, (data, label) in enumerate(dataloader_train):
+           # colorized_predictions , colorized_labels = GTA5.visualize_prediction(model(data)[0], label)
+                
+                
+
+            #writer.add_image('eval%d/iter%d/immagineVera' % (epoch, i), np.array(data[0].cpu(),dtype='uint8'), step, dataformats='CHW')
+            #writer.add_image('eval%d/iter%d/etichetta' % (epoch, i), np.array(colorized_labels), step, dataformats='HWC')
             data = data.cuda()
             label = label.long().cuda()
             optimizer.zero_grad()
-            data_visualize,label_visualize = CityScapes.visualize_prediction(model(data)[0], label)
-            writer.add_image('eval%d/iter%d/data_visualize' % (epoch, i), np.array(data_visualize), step, dataformats='HWC')
-            writer.add_image('eval%d/iter%d/label_visualize' % (epoch, i), np.array(label_visualize), step, dataformats='HWC')
+           
             with amp.autocast():
                 output, out16, out32 = model(data)
                 loss1 = loss_func(output, label.squeeze(1))
@@ -216,6 +220,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
             
             loss_source_record.append(loss_d1_s.item())
             loss_target_record.append(loss_d1_t.item())
+
         tq.close()
         
         loss_train_mean = np.mean(loss_record)
@@ -277,7 +282,7 @@ def train_improvements(args, model, model_D1, optimizer,optimizer_D1, dataloader
         
         for i, ((src_x, src_y), (trg_x, _)) in enumerate(zip(dataloader_source, dataloader_target)):
            
-
+            
             scr_img_copy=src_x.clone()
             mean_img = torch.zeros(1,1)
             if mean_img.shape[-1] < 2:
@@ -287,17 +292,18 @@ def train_improvements(args, model, model_D1, optimizer,optimizer_D1, dataloader
        
             # 1. source to target, target to target
             
-            src_in_trg = FDA_source_to_target( src_x, trg_x, L=0.01 )            # src_lbl
-            src_x_visualize,src_y_visualize = GTA5.visualize_prediction(src_x, src_y)
-            writer.add_image('eval%d/iter%d/predicted_eval_labels' % (epoch, i), np.array(src_x_visualize), step, dataformats='HWC')
-            writer.add_image('eval%d/iter%d/correct_eval_labels' % (epoch, i), np.array(src_y_visualize), step, dataformats='HWC')
+            src_in_trg = FDA_source_to_target( src_x, trg_x, L=0.001 )            # src_lbl
+           # src_x_visualize,src_y_visualize = GTA5.visualize_prediction(src_in_trg, src_y)
+          
+           # writer.add_image('eval%d/iter%d/correct_eval_labels' % (epoch, i), np.array(src_y_visualize), step, dataformats='HWC')
 
             trg_in_trg = trg_x            # trg, trg_lbl
             
             
             # 2. subtract mean
-            src_x = src_in_trg.clone() - mean_img                             # src, src_lbl
-            trg_x = trg_in_trg.clone() - mean_img                             # trg, trg_lbl      
+            #src_x = src_in_trg.clone() - mean_img                             # src, src_lbl
+            #writer.add_image('eval%d/iter%d/predicted_eval_labels' % (epoch, i), np.array(src_x), step, dataformats='NCHW')
+            #trg_x = trg_in_trg.clone() - mean_img                             # trg, trg_lbl      
             #print(i)
             optimizer.zero_grad()
             optimizer_D1.zero_grad()
