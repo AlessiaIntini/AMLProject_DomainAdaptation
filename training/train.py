@@ -251,7 +251,7 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
     writer.add_scalar('epoch/miou val', miou, epoch)
 
 
-def train_improvements(args, model, model_D1, optimizer,optimizer_D1, dataloader_source, dataloader_target, dataloader_val, start_epoch, comment=''):
+def train_improvements(args, model, model_D1, optimizer,optimizer_D1, dataloader_source, dataloader_target, dataloader_val, start_epoch, L, comment=''):
     #writer = SummaryWriter(comment=''.format(args.optimizer))
     writer = SummaryWriter(comment=comment)
     scaler = amp.GradScaler()
@@ -292,7 +292,7 @@ def train_improvements(args, model, model_D1, optimizer,optimizer_D1, dataloader
        
             # 1. source to target, target to target
             
-            src_in_trg = FDA_source_to_target( src_x, trg_x, L=0.001 )            # src_lbl
+            src_in_trg = FDA_source_to_target( src_x, trg_x, L)            # src_lbl
            # src_x_visualize,src_y_visualize = GTA5.visualize_prediction(src_in_trg, src_y)
           
            # writer.add_image('eval%d/iter%d/correct_eval_labels' % (epoch, i), np.array(src_y_visualize), step, dataformats='HWC')

@@ -120,4 +120,9 @@ def parse_args():
                        type=float,
                        default=0.002,
                        help='Select if you want to resume from best or latest checkpoint')
+    
+    parse.add_argument('--l',
+                       type=float,
+                       default=0.001,
+                       help='Set L of fourier transform')
     return parse.parse_args()
