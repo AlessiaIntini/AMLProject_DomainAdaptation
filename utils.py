@@ -621,7 +621,7 @@ def extract_ampl_phase(fft_re, fft_im):
     fft_pha = torch.angle(fft_complex)
     return fft_amp, fft_pha
 
-def low_freq_mutate( amp_src, amp_trg, L=0.05 ):
+def low_freq_mutate( amp_src, amp_trg, L=0.01 ):
     _, _, h, w = amp_src.size()
     y, x = np.ogrid[:h, :w]
     center = (h // 2, w // 2)
@@ -648,7 +648,7 @@ def low_freq_mutate( amp_src, amp_trg, L=0.05 ):
 
     return amp_src
 
-def FDA_source_to_target(src_img, trg_img, L=0.05):
+def FDA_source_to_target(src_img, trg_img, L=0.01):
     # exchange magnitude
     # input: src_img, trg_img
 

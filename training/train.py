@@ -292,7 +292,7 @@ def train_improvements(args, model, model_D1, optimizer,optimizer_D1, dataloader
        
             # 1. source to target, target to target
             
-            src_in_trg = FDA_source_to_target( src_x, trg_x, L=0.05 )            # src_lbl
+            src_in_trg = FDA_source_to_target( src_x, trg_x, L=0.01 )            # src_lbl
            # src_x_visualize,src_y_visualize = GTA5.visualize_prediction(src_in_trg, src_y)
           
            # writer.add_image('eval%d/iter%d/correct_eval_labels' % (epoch, i), np.array(src_y_visualize), step, dataformats='HWC')
