@@ -10,7 +10,12 @@ def str2bool(v):
 
 def parse_args():
     parse = argparse.ArgumentParser()
-
+    parse.add_argument("--switch2entropy", 
+                       type=int, 
+                       default=16, 
+                       help="switch to entropy after this many steps"
+    )
+    
     parse.add_argument('--mode',
                        dest='mode',
                        type=str,

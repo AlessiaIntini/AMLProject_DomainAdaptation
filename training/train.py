@@ -278,7 +278,7 @@ def train_improvements(args, model, model_D1, optimizer,optimizer_D1, dataloader
         loss_source_record = []
         loss_target_record = []
         
-        for i, ((src_img, src_lbl), (trg_img, _)) in enumerate(zip(dataloader_source, dataloader_target)):
+        for i, ((src_img, src_lbl), (trg_img, trg_lbl)) in enumerate(zip(dataloader_source, dataloader_target)):
            
             
             scr_img_copy=src_img.clone()
@@ -303,6 +303,8 @@ def train_improvements(args, model, model_D1, optimizer,optimizer_D1, dataloader
             #optimizer_D1.zero_grad()
             src_img= src_in_trg.cuda()
             src_lbl= src_lbl.long().cuda()
+            trg_img= trg_in_trg.cuda()
+            trg_lbl= trg_lbl.long().cuda()
             #trg_x = trg_x.cuda()
             #src_x = src_x.cuda()
             #src_y = src_y.long().cuda()
@@ -321,20 +323,22 @@ def train_improvements(args, model, model_D1, optimizer,optimizer_D1, dataloader
                 loss = loss1 + loss2 + loss3
 
             scaler.scale(loss).backward()
-            '''
+            
             with amp.autocast():
                 output_s, out16_s, out32_s = model(trg_img)
-                loss1 = loss_func(output_s, src_lbl.squeeze(1))
-                loss2 = loss_func(out16_s, src_lbl.squeeze(1))
-                loss3 = loss_func(out32_s, src_lbl.squeeze(1))
+                loss1 = loss_func(output_s, trg_lbl.squeeze(1))
+                loss2 = loss_func(out16_s, trg_lbl.squeeze(1))
+                loss3 = loss_func(out32_s, trg_lbl.squeeze(1))
                 lossT = loss1 + loss2 + loss3
             scaler.scale(lossT).backward()
             #scaler.step(optimizer)
             #scaler.update()
             #print(loss)
-            #Train D
+            triger_ent = 0.0
+            if i > args.switch2entropy:
+                triger_ent = 1.0
+            loss=loss+triger_ent*lossT
             loss_record.append(loss.item())
-            '''
             scaler.step(optimizer)
             scaler.update()
 
