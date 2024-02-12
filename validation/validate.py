@@ -83,5 +83,7 @@ def val(args, model, dataloader, writer = None , epoch = None, step = None):
         print('precision per pixel for test: %.3f' % precision)
         print('mIoU for validation: %.3f' % miou)
         print(f'mIoU per class: {miou_list}')
+        writer.add_scalar('epoch/precision_val', precision, epoch)
+        writer.add_scalar('epoch/miou val', miou, epoch)
 
         return precision, miou
