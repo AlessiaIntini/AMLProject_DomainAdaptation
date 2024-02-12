@@ -280,52 +280,97 @@ def train_improvements(args, model, model_D1, optimizer,optimizer_D1, dataloader
         loss_source_record = []
         loss_target_record = []
         
-        for i, ((src_x, src_y), (trg_x, _)) in enumerate(zip(dataloader_source, dataloader_target)):
+        for i, ((src_img, src_lbl), (trg_img, _)) in enumerate(zip(dataloader_source, dataloader_target)):
            
             
-            scr_img_copy=src_x.clone()
+            scr_img_copy=src_img.clone()
             mean_img = torch.zeros(1,1)
             if mean_img.shape[-1] < 2:
-                B, C, H, W = src_x.shape
+                B, C, H, W = src_img.shape
                 mean_img = IMG_MEAN.repeat(B,1,H,W)
                 
        
             # 1. source to target, target to target
             
-            src_in_trg = FDA_source_to_target( src_x, trg_x, L)            # src_lbl
-           # src_x_visualize,src_y_visualize = GTA5.visualize_prediction(src_in_trg, src_y)
-          
-           # writer.add_image('eval%d/iter%d/correct_eval_labels' % (epoch, i), np.array(src_y_visualize), step, dataformats='HWC')
-
-            trg_in_trg = trg_x            # trg, trg_lbl
-            
+            src_in_trg = FDA_source_to_target( src_img, trg_img, L)             # scr,src_lbl
+            trg_in_trg = trg_img.cuda()                                              # trg, trg_lbl
+           
             
             # 2. subtract mean
             #src_x = src_in_trg.clone() - mean_img                             # src, src_lbl
-            #writer.add_image('eval%d/iter%d/predicted_eval_labels' % (epoch, i), np.array(src_x), step, dataformats='NCHW')
+            #writer.add_image('eval%d/iter%d/predicted_eval_labels' % (epoch, i), np.array(src_in_trg), step, dataformats='NCHW')
             #trg_x = trg_in_trg.clone() - mean_img                             # trg, trg_lbl      
             #print(i)
             optimizer.zero_grad()
-            optimizer_D1.zero_grad()
-
-            trg_x = trg_x.cuda()
-            src_x = src_x.cuda()
-            src_y = src_y.long().cuda()
+            #optimizer_D1.zero_grad()
+            src_img= src_in_trg.cuda()
+            src_lbl= src_lbl.long().cuda()
+            #trg_x = trg_x.cuda()
+            #src_x = src_x.cuda()
+            #src_y = src_y.long().cuda()
             #Train G
 
             #Train with source
-            for param in model_D1.parameters():
-                param.requires_grad = False
+            #for param in model_D1.parameters():
+            #    param.requires_grad = False
 
         
             with amp.autocast():
-                output_s, out16_s, out32_s = model(src_x)
-                loss1 = loss_func(output_s, src_y.squeeze(1))
-                loss2 = loss_func(out16_s, src_y.squeeze(1))
-                loss3 = loss_func(out32_s, src_y.squeeze(1))
+                output_s, out16_s, out32_s = model(src_img.half())
+                loss1 = loss_func(output_s, src_lbl.squeeze(1))
+                loss2 = loss_func(out16_s, src_lbl.squeeze(1))
+                loss3 = loss_func(out32_s, src_lbl.squeeze(1))
                 loss = loss1 + loss2 + loss3
 
             scaler.scale(loss).backward()
+            '''
+            with amp.autocast():
+                output_s, out16_s, out32_s = model(trg_img)
+                loss1 = loss_func(output_s, src_lbl.squeeze(1))
+                loss2 = loss_func(out16_s, src_lbl.squeeze(1))
+                loss3 = loss_func(out32_s, src_lbl.squeeze(1))
+                lossT = loss1 + loss2 + loss3
+            scaler.scale(lossT).backward()
+            #scaler.step(optimizer)
+            #scaler.update()
+            #print(loss)
+            #Train D
+            loss_record.append(loss.item())
+            '''
+            scaler.step(optimizer)
+            scaler.update()
+
+            tq.update(args.batch_size)
+            tq.set_postfix(loss='%.6f' % loss)
+            step += 1
+            writer.add_scalar('loss_step', loss, step)
+            loss_record.append(loss.item())
+        tq.close()
+        loss_train_mean = np.mean(loss_record)
+        writer.add_scalar('epoch/loss_epoch_train', float(loss_train_mean), epoch)
+        print('loss for train : %f' % (loss_train_mean))
+        if epoch % args.checkpoint_step == 0 and epoch != 0:
+            import os
+            if not os.path.isdir(args.save_model_path):
+                os.mkdir(args.save_model_path)
+            torch.save({'state_dict':model.module.state_dict(),'optimizer_state_dict': optimizer.state_dict()}, os.path.join(args.save_model_path, 'latest_'+str(epoch)+'.pth'))
+
+        if epoch % args.validation_step == 0 and epoch != 0:
+            precision, miou = val(args, model, dataloader_val, writer, epoch, step)
+            if miou > max_miou:
+                max_miou = miou
+                import os
+                os.makedirs(args.save_model_path, exist_ok=True)
+                torch.save(model.module.state_dict(), os.path.join(args.save_model_path, 'best.pth'))
+            writer.add_scalar('epoch/precision_val', precision, epoch)
+            writer.add_scalar('epoch/miou val', miou, epoch)
+    #final evaluation
+    precision, miou = val(args, model, dataloader_val, writer, epoch, step)
+    writer.add_scalar('epoch/precision_val', precision, epoch)
+    writer.add_scalar('epoch/miou val', miou, epoch)
+
+
+
             #scaler.step(optimizer)
             #scaler.update()
 
@@ -335,7 +380,7 @@ def train_improvements(args, model, model_D1, optimizer,optimizer_D1, dataloader
             #optimizer.zero_grad()
             #optimizer_D1.zero_grad()
 
-            with amp.autocast():
+'''           with amp.autocast():
                 output_t, out16_t, out32_t = model(trg_x)
                 
                 D_out1 = model_D1(F.softmax(output_t,dim=1))
@@ -420,4 +465,4 @@ def train_improvements(args, model, model_D1, optimizer,optimizer_D1, dataloader
     #final evaluation
     val(args, model, dataloader_val, writer, epoch, step)
     writer.add_scalar('epoch/precision_val', precision, epoch)
-    writer.add_scalar('epoch/miou val', miou, epoch)
+    writer.add_scalar('epoch/miou val', miou, epoch)'''
