@@ -314,6 +314,9 @@ def train_improvements(args, model, model_D1, optimizer,optimizer_D1, dataloader
             #for param in model_D1.parameters():
             #    param.requires_grad = False
 
+            triger_ent = 0.0
+            if i > args.switch2entropy:
+                triger_ent = 1.0
         
             with amp.autocast():
                 output_s, out16_s, out32_s = model(src_img.half())
@@ -321,6 +324,11 @@ def train_improvements(args, model, model_D1, optimizer,optimizer_D1, dataloader
                 loss2 = loss_func(out16_s, src_lbl.squeeze(1))
                 loss3 = loss_func(out32_s, src_lbl.squeeze(1))
                 loss = loss1 + loss2 + loss3
+
+                output_s, out16_s, out32_s = model(trg_in_trg)
+                loss_trg = output_s.loss_ent
+
+                loss = loss + loss_trg*triger_ent*args.entW
 
             scaler.scale(loss).backward()
             '''

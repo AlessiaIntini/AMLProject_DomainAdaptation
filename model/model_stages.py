@@ -244,6 +244,16 @@ class BiSeNet(nn.Module):
         feat_out16 = F.interpolate(feat_out16, (H, W), mode='bilinear', align_corners=True)
         feat_out32 = F.interpolate(feat_out32, (H, W), mode='bilinear', align_corners=True)
 
+        P = F.softmax(feat_out, dim=1)        # [B, 19, H, W]
+        logP = F.log_softmax(x, dim=1) # [B, 19, H, W]
+        PlogP = P * logP               # [B, 19, H, W]
+        ent = -1.0 * PlogP.sum(dim=1)  # [B, 1, H, W]
+        ent = ent / 2.9444         # chanage when classes is not 19
+        # compute robust entropy
+        ent = ent ** 2.0 + 1e-8
+        ent = ent ** 1.5
+        feat_out.loss_ent = ent.mean()
+
         return feat_out, feat_out16, feat_out32
 
     def init_weight(self):

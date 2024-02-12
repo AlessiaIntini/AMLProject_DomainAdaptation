@@ -125,4 +125,13 @@ def parse_args():
                        type=float,
                        default=0.001,
                        help='Set L of fourier transform')
+    
+    parse.add_argument('--entW',
+                       type=float,
+                       default=0.005,
+                       help='Set L of fourier transform')
+    parse.add_argument('--switch2entropy',
+                       type=int,
+                       default=10,
+                       help='Set L of fourier transform')
     return parse.parse_args()
