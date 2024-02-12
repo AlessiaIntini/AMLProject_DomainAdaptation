@@ -322,7 +322,7 @@ def train_improvements(args, model, model_D1, optimizer,optimizer_D1, dataloader
                 loss3 = loss_func(out32_s, src_lbl.squeeze(1))
                 loss = loss1 + loss2 + loss3
 
-            scaler.scale(loss).backward()
+            #scaler.scale(loss).backward()
             
             with amp.autocast():
                 output_s, out16_s, out32_s = model(trg_img)
@@ -330,7 +330,7 @@ def train_improvements(args, model, model_D1, optimizer,optimizer_D1, dataloader
                 loss2 = loss_func(out16_s, trg_lbl.squeeze(1))
                 loss3 = loss_func(out32_s, trg_lbl.squeeze(1))
                 lossT = loss1 + loss2 + loss3
-            scaler.scale(lossT).backward()
+            #scaler.scale(lossT).backward()
             #scaler.step(optimizer)
             #scaler.update()
             #print(loss)
@@ -338,6 +338,7 @@ def train_improvements(args, model, model_D1, optimizer,optimizer_D1, dataloader
             if i > args.switch2entropy:
                 triger_ent = 1.0
             loss=loss+triger_ent*lossT
+            scaler.scale(loss).backward()
             loss_record.append(loss.item())
             scaler.step(optimizer)
             scaler.update()
