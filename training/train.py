@@ -335,7 +335,7 @@ def train_improvements(args, model, model_D1, optimizer,optimizer_D1, dataloader
             #scaler.update()
             #print(loss)
             triger_ent = 0.0
-            if i > args.switch2entropy:
+            if epoch > args.switch2entropy:
                 triger_ent = 1.0
             loss=loss+triger_ent*lossT
             scaler.scale(loss).backward()
