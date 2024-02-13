@@ -15,7 +15,14 @@ def parse_args():
                        default=16, 
                        help="switch to entropy after this many steps"
     )
-    
+    parse.add_argument("--entW",
+                        type=float, 
+                        default=0.005, 
+                        help="weight for entropy")
+    parse.add_argument("--ita", 
+                       type=float, 
+                       default=2.0, 
+                       help="ita for robust entropy")
     parse.add_argument('--mode',
                        dest='mode',
                        type=str,

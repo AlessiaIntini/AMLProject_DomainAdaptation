@@ -715,3 +715,30 @@ def FDA_source_to_target(src_img, trg_img, L):
     #print("src_in_trg",src_in_trg.shape)
     return src_in_trg
 
+class EntropyMinimizationLoss(nn.Module):
+    def __init__(self):
+        super(EntropyMinimizationLoss, self).__init__()
+
+    def forward(self, x, ita):
+        """
+        Computes entropy minimization loss.
+
+        Args:
+        - x: input tensor (tensor)
+        - ita: hyperparameter to control the amount of entropy minimization (float)
+
+        Returns:
+            torch.Tensor: Entropy minimization loss.
+        """
+
+        P = F.softmax(x, dim=1)        # [B, 19, H, W]
+        logP = F.log_softmax(x, dim=1) # [B, 19, H, W]
+        PlogP = P * logP               # [B, 19, H, W]
+        ent = -1.0 * PlogP.sum(dim=1)  # [B, 1, H, W]
+        ent = ent / 2.9444         # change when classes is not 19
+        # compute robust entropy
+        ent = ent ** 2.0 + 1e-8
+        ent = ent ** ita
+        ent_loss_value = ent.mean()
+
+        return ent_loss_value

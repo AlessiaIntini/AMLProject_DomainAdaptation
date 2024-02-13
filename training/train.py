@@ -14,8 +14,8 @@ import argparse
 import numpy as np
 from tensorboardX import SummaryWriter
 import torch.cuda.amp as amp
-from utils import poly_lr_scheduler
-from utils import reverse_one_hot, compute_global_accuracy, fast_hist, per_class_iu
+from options.option import parse_args
+from utils import *
 from tqdm import tqdm
 import random
 import os
@@ -251,11 +251,12 @@ def train_and_adapt(args, model, model_D1, optimizer,optimizer_D1, dataloader_so
 
 def train_improvements(args, model, model_D1, optimizer,optimizer_D1, dataloader_source, dataloader_target, dataloader_val, start_epoch, L, comment=''):
     #writer = SummaryWriter(comment=''.format(args.optimizer))
+    args = parse_args()
     writer = SummaryWriter(comment=comment)
     scaler = amp.GradScaler()
 
-    loss_func = torch.nn.CrossEntropyLoss(ignore_index=255) 
-    bce_loss = torch.nn.BCEWithLogitsLoss()
+    loss_crossE = torch.nn.CrossEntropyLoss(ignore_index=255) 
+    loss_ent = EntropyMinimizationLoss()
 
     max_miou = 0
     step = start_epoch
@@ -317,27 +318,22 @@ def train_improvements(args, model, model_D1, optimizer,optimizer_D1, dataloader
         
             with amp.autocast():
                 output_s, out16_s, out32_s = model(src_img.half())
-                loss1 = loss_func(output_s, src_lbl.squeeze(1))
-                loss2 = loss_func(out16_s, src_lbl.squeeze(1))
-                loss3 = loss_func(out32_s, src_lbl.squeeze(1))
+                loss1 = loss_crossE(output_s, src_lbl.squeeze(1))
+                loss2 = loss_crossE(out16_s, src_lbl.squeeze(1))
+                loss3 = loss_crossE(out32_s, src_lbl.squeeze(1))
                 loss = loss1 + loss2 + loss3
 
             #scaler.scale(loss).backward()
             
             with amp.autocast():
-                output_s, out16_s, out32_s = model(trg_img)
-                loss1 = loss_func(output_s, trg_lbl.squeeze(1))
-                loss2 = loss_func(out16_s, trg_lbl.squeeze(1))
-                loss3 = loss_func(out32_s, trg_lbl.squeeze(1))
-                lossT = loss1 + loss2 + loss3
-            #scaler.scale(lossT).backward()
-            #scaler.step(optimizer)
-            #scaler.update()
-            #print(loss)
+                output_t, out16_s, out32_s = model(trg_img)
+                lossT=loss_ent(output_t,args.ita)
+               
+            
             triger_ent = 0.0
-            if epoch > args.switch2entropy:
+            if epoch < args.switch2entropy:
                 triger_ent = 1.0
-            loss=loss+triger_ent*lossT
+            loss=loss+triger_ent*lossT*args.entW
             scaler.scale(loss).backward()
             loss_record.append(loss.item())
             scaler.step(optimizer)
