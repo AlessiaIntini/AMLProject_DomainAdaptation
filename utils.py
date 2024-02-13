@@ -1,13 +1,13 @@
 import torch.nn as nn
 import torch
 import torchvision.transforms.functional as F
+import torch.nn.functional as FN
 from PIL import Image
 import numpy as np
 import pandas as pd
 import random
 import numbers
 import torchvision
-
 from PIL import Image
 
 def poly_lr_scheduler(optimizer, init_lr, iter, lr_decay_iter=1,
@@ -731,8 +731,8 @@ class EntropyMinimizationLoss(nn.Module):
             torch.Tensor: Entropy minimization loss.
         """
 
-        P = F.softmax(x, dim=1)        # [B, 19, H, W]
-        logP = F.log_softmax(x, dim=1) # [B, 19, H, W]
+        P = FN.softmax(x, dim=1)        # [B, 19, H, W]
+        logP = FN.log_softmax(x, dim=1) # [B, 19, H, W]
         PlogP = P * logP               # [B, 19, H, W]
         ent = -1.0 * PlogP.sum(dim=1)  # [B, 1, H, W]
         ent = ent / 2.9444         # change when classes is not 19
