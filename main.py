@@ -232,7 +232,7 @@ def main():
     
     start_epoch = 0
     
-    if args.resume and args.dataset != 'DA' and args.dataset != 'FDA':
+    if args.resume and args.dataset != 'DA':
         for check in os.listdir('./checkpoints'):
             if 'latest_' in check:
 
