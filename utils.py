@@ -9,6 +9,7 @@ import random
 import numbers
 import torchvision
 from PIL import Image
+from typing import Optional, List
 
 def poly_lr_scheduler(optimizer, init_lr, iter, lr_decay_iter=1,
                       max_iter=300, power=0.9):
@@ -401,6 +402,28 @@ class ExtScale(ExtTransforms):
         assert img.size == lbl.size
         target_size = ( int(img.size[1]*self.scale), int(img.size[0]*self.scale) ) # (H, W)
         return F.resize(img, target_size, self.interpolation), F.resize(lbl, target_size, Image.NEAREST)
+    
+class ExtGaussianBlur(ExtTransforms):
+    """
+    Apply Gaussian Blur to the given PIL Image and its label with a given probability.
+
+    Args:
+    - p: probability of the image being blurred.
+    - radius: radius of the Gaussian blur kernel (must be odd and positive)
+    - sigma: Optional standard deviation of the Gaussian blur kernel
+    """
+
+    def __init__( self, p=0.5, radius:List[int]=1, sigma:Optional[List[float]]=None ):
+        self.p = p
+        self.radius = radius
+        self.sigma = sigma
+
+    def __call__(self, img : Image, lbl : Image) -> (Image, Image):
+        if random.random() < self.p:
+            return F.gaussian_blur(img, self.radius, self.sigma), lbl
+        return img, lbl  
+
+
 
 class ExtColorJitter(object):
     """Randomly change the brightness, contrast and saturation of an image.
