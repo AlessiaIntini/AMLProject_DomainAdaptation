@@ -70,7 +70,7 @@ def main():
         
         if args.augmentation:
             print("Performing data augmentation")
-            transformations = ExtCompose([ExtRandomCrop(GTA_CROPSIZE), ExtToTensor(),ExtColorJitter(p=0.5, brightness=0.2, contrast=0.1, saturation=0.1, hue=0)])
+            transformations = ExtCompose([ExtRandomCrop(GTA_CROPSIZE), ExtToTensor(),ExtColorJitter(p=0.5, brightness=0.2, contrast=0.1, saturation=0.1, hue=0.2)])
             train_dataset_big = GTA5(root = Path(initial_path), transforms=transformations)
         else: 
             transformations = ExtCompose([ExtResize(GTA_CROPSIZE), ExtToTensor()])
