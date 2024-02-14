@@ -326,9 +326,11 @@ def train_improvements(args, model, model_D1, optimizer,optimizer_D1, dataloader
             #scaler.scale(loss).backward()
             
             with amp.autocast():
-                output_t, out16_s, out32_s = model(trg_img)
-                lossT=loss_ent(output_t,args.ita)
-               
+                output_t, out16_t, out32_t = model(trg_img)
+                lossT1 = loss_ent(output_t, args.ita)
+                lossT2 = loss_ent(out16_t, args.ita)
+                lossT3 = loss_ent(out32_t, args.ita)
+                lossT = lossT1 + lossT2 + lossT3
             
             triger_ent = 0.0
             if epoch > args.switch2entropy:
