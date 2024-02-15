@@ -10,7 +10,7 @@ from options.option import parse_args
 from utils import *
 from tqdm import tqdm
 from sklearn.model_selection import train_test_split
-import torch.nn.functional as F
+import torchvision.transforms.functional as F
 from validation.validate import *
 
 logger = logging.getLogger()
