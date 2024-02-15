@@ -1,25 +1,10 @@
-from model.model_stages import BiSeNet
-from model.discriminator import FCDiscriminator
 from dataset.cityscapes import CityScapes
 from dataset.GTA5 import GTA5
-import torchvision.transforms as transforms
-from torchvision.transforms import v2
-from utils import ExtCompose, ExtResize, ExtToTensor, ExtTransforms, ExtRandomHorizontalFlip , ExtScale , ExtRandomCrop
 import torch
-from torch.utils.data import DataLoader, Subset
-import logging
-import argparse
 import numpy as np
 from tensorboardX import SummaryWriter
-import torch.cuda.amp as amp
-from utils import poly_lr_scheduler
-from utils import reverse_one_hot, compute_global_accuracy, fast_hist, per_class_iu
-from tqdm import tqdm
+from utils import *
 import random
-import os
-from PIL import Image
-from pathlib import Path
-
 
 def val(args, model, dataloader, writer = None , epoch = None, step = None):
     print('start val!')
