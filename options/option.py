@@ -11,25 +11,12 @@ def str2bool(v):
 
 def parse_args():
     parse = argparse.ArgumentParser()
-    parse.add_argument("--switch2entropy", 
-                       type=int, 
-                       default=16, 
-                       help="switch to entropy after this many steps"
-    )
-    parse.add_argument("--entW",
-                        type=float, 
-                        default=0.005, 
-                        help="weight for entropy")
-    parse.add_argument("--ita", 
-                       type=float, 
-                       default=2.0, 
-                       help="ita for robust entropy")
+
     parse.add_argument('--mode',
                        dest='mode',
                        type=str,
                        default='train',
     )
-
     parse.add_argument('--backbone',
                        dest='backbone',
                        type=str,
@@ -128,14 +115,26 @@ def parse_args():
     parse.add_argument('--lr_discr',
                        type=float,
                        default=0.0003,
-                       help='Select if you want to resume from best or latest checkpoint')
+                       help='Learning rate for the discriminator')
     parse.add_argument('--lambda_d1',
                        type=float,
-                       default=0.002,
-                       help='Select if you want to resume from best or latest checkpoint')
-    
+                       default=1e-4,
+                       help='The weight used to balance the two losses in adversarial domain adaptation')
     parse.add_argument('--l',
                        type=float,
                        default=0.001,
                        help='Set L of fourier transform')
+    parse.add_argument("--switch2entropy", 
+                       type=int, 
+                       default=16, 
+                       help="switch to entropy after this many steps"
+    )
+    parse.add_argument("--entW",
+                        type=float, 
+                        default=1.6e-6, 
+                        help="weight for entropy")
+    parse.add_argument("--ita", 
+                       type=float, 
+                       default=2.0, 
+                       help="ita for robust entropy")
     return parse.parse_args()
