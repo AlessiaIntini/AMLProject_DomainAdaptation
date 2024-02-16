@@ -118,7 +118,7 @@ def parse_args():
                        help='Learning rate for the discriminator')
     parse.add_argument('--lambda_d1',
                        type=float,
-                       default=1e-4,
+                       default=0.002,
                        help='The weight used to balance the two losses in adversarial domain adaptation')
     parse.add_argument('--l',
                        type=float,
