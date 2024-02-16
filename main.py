@@ -154,16 +154,6 @@ def main():
                     pin_memory=False,
                     drop_last=True)
 
-        if args.optimizer == 'rmsprop':
-            optimizer_D1 = torch.optim.RMSprop(model_D1.parameters(), lr=args.lr_discr)
-        elif args.optimizer == 'sgd':
-            optimizer_D1 = torch.optim.SGD(model_D1.parameters(), lr=args.lr_discr, momentum=0.9, weight_decay=1e-4)
-        elif args.optimizer == 'adam':
-            optimizer_D1 = torch.optim.Adam(model_D1.parameters(), lr=args.lr_discr)
-        else:
-            print('not supported optimizer \n')
-            return None
-
     else:
         print("Error, select a valid dataset")
         return None
