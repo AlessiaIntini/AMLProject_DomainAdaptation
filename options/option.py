@@ -122,7 +122,7 @@ def parse_args():
                        help='The weight used to balance the two losses in adversarial domain adaptation')
     parse.add_argument('--l',
                        type=float,
-                       default=0.001,
+                       default=0.006,
                        help='Set L of fourier transform')
     parse.add_argument("--switch2entropy", 
                        type=int, 
