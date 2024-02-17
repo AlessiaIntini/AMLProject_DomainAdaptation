@@ -6,12 +6,15 @@ from tensorboardX import SummaryWriter
 from utils import *
 import random
 
+#Validation function used to claculate the metrics on the test/validation dataset
 def val(args, model, dataloader, writer = None , epoch = None, step = None):
     print('start val!')
+    
     with torch.no_grad():
         model.eval()
         precision_record = []
         hist = np.zeros((args.num_classes, args.num_classes))
+        #take some random index to visualize a sample of the predictions
         random_sample = [random.randint(0, len(dataloader) - 1),
                         random.randint(0, len(dataloader) - 1),
                         random.randint(0, len(dataloader) - 1),
@@ -22,6 +25,7 @@ def val(args, model, dataloader, writer = None , epoch = None, step = None):
                         random.randint(0, len(dataloader) - 1),
                         random.randint(0, len(dataloader) - 1),
                         random.randint(0, len(dataloader) - 1)]
+        # Iterate over the test dataloader
         for i, (data, label) in enumerate(dataloader):
             label = label.type(torch.LongTensor)
             data = data.cuda()
@@ -29,7 +33,7 @@ def val(args, model, dataloader, writer = None , epoch = None, step = None):
 
             # get RGB predict image
             predict, _, _ = model(data)
-            
+            # Save the image if it is included in the sample
             if i in random_sample and writer is not None:
                 if args.dataset == 'CITYSCAPES' or args.dataset == 'DA' or args.dataset == 'CROSS_DOMAIN' or args.augmentation or args.dataset == 'FDA' :
                     colorized_predictions , colorized_labels = CityScapes.visualize_prediction(predict, label)
@@ -57,9 +61,7 @@ def val(args, model, dataloader, writer = None , epoch = None, step = None):
             precision = compute_global_accuracy(predict, label)
             hist += fast_hist(label.flatten(), predict.flatten(), args.num_classes)
 
-            # there is no need to transform the one-hot array to visual RGB array
-            # predict = colour_code_segmentation(np.array(predict), label_info)
-            # label = colour_code_segmentation(np.array(label), label_info)
+            
             precision_record.append(precision)
             
         precision = np.mean(precision_record)

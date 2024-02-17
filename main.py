@@ -29,22 +29,27 @@ def main():
     print("Dim batch_size " + str(args.batch_size))
     print("Optimizer is " + args.optimizer)
 
+    # If the script is running on colab use local = false
     if args.local:
         initial_path = "."   
     else:
         initial_path = "/content"
 
+    # Training on Cityscapes as train and validation dataset
     if args.dataset == 'CITYSCAPES':
         print('training on CityScapes')
         
+        # For the train just resize the images to obtain a faster training
         transformations = ExtCompose([ExtResize(CITYSCAPES_CROPSIZE), ExtToTensor()])    
         train_dataset = CityScapes(root = initial_path + "/Cityscapes/Cityspaces", split = 'train',transforms=transformations)
-    
+
+        # For validation use the full size images from the val dataset
         transformations = ExtCompose([ExtToTensor()])
         val_dataset = CityScapes(root= initial_path + "/Cityscapes/Cityspaces", split='val',transforms=transformations)#eval_transformations)
 
 
-
+    # Training on GTA as train dataset and GTA5 as val dataset if no data augmentation is performed
+    # otherwise on Cityscapes as validation
     elif args.dataset == 'GTA5':
         print('training on GTA5')
         
@@ -56,26 +61,33 @@ def main():
             transformations = ExtCompose([ExtRandomCrop(GTA_CROPSIZE), ExtRandomHorizontalFlip(),ExtColorJitter(p=0.5, brightness=0.2, contrast=0.1, saturation=0.1, hue=0.2), ExtToTensor()])
             train_dataset_big = GTA5(root = Path(initial_path), transforms=transformations)
         else: 
+            # If no augmentation just resize the images
             transformations = ExtCompose([ExtResize(GTA_CROPSIZE), ExtToTensor()])
             train_dataset_big = GTA5(root = Path(initial_path), transforms=transformations)
         
+        #Create an array containing all the index of the dataset
         indexes = range(0, len(train_dataset_big))
         
+        # Split the indexes with shuffle = true, we are using 75% of the dataset for train
+        # and 25% for validation
         splitting = train_test_split(indexes, train_size = 0.75, random_state = 42, shuffle = True)
         train_indexes = splitting[0]
         train_dataset = Subset(train_dataset_big, train_indexes)
 
+        # If augmentation take Cityscapes as validation dataset
         if args.augmentation:
             transformations = ExtCompose([ExtToTensor()])
             val_dataset = CityScapes(root= initial_path + "/Cityscapes/Cityspaces", split='val',transforms=transformations)
         else:
             transformations = ExtCompose([ExtToTensor()])
-            train_dataset_big = GTA5(root = Path(initial_path), transforms=transformations)
-            indexes = range(0, len(train_dataset_big))
-            splitting = train_test_split(indexes, train_size = 0.75, random_state = 42, shuffle = True)
+            #train_dataset_big = GTA5(root = Path(initial_path), transforms=transformations)
+            #indexes = range(0, len(train_dataset_big))
+            #splitting = train_test_split(indexes, train_size = 0.75, random_state = 42, shuffle = True)
             val_indexes = splitting[1]
             val_dataset = Subset(train_dataset_big, val_indexes)
 
+
+    # Training on GTA5 and validating on Cityscapes
     elif args.dataset == 'CROSS_DOMAIN':
         print('training on CROSS_DOMAIN, training on GTA5 and validating on CityScapes')
         #Training on all GTA5 dataset
@@ -85,14 +97,18 @@ def main():
         transformations = ExtCompose([ExtToTensor()])
         val_dataset = CityScapes(root= initial_path + "/Cityscapes/Cityspaces", split='val',transforms=transformations) 
 
+
+    # Training on GTA5 using adversarial domain adaptation, validating on Cityscapes
     elif args.dataset == 'DA':
+        
+        # Create the discriminator model
         model_D1 = FCDiscriminator(num_classes=args.num_classes)
         
-        #Cityscapes used as target
+        # Cityscapes used as target
         transformations = ExtCompose([ExtResize(GTA_CROPSIZE), ExtToTensor()]) 
         target_dataset = CityScapes(root = initial_path + "/Cityscapes/Cityspaces", split = 'train',transforms=transformations)
         
-        
+        # GTA as source
         transformations = ExtCompose([ExtRandomCrop(GTA_CROPSIZE), ExtRandomHorizontalFlip(),ExtColorJitter(p=0.5, brightness=0.2, contrast=0.1, saturation=0.1, hue=0.2), ExtToTensor()])
         source_dataset = GTA5(root = Path(initial_path), transforms=transformations)
         
@@ -118,25 +134,31 @@ def main():
         model_D1.train()
         model_D1.cuda()
 
+        # Choose the optimizer for the discriminator
         if args.optimizer == 'rmsprop':
             optimizer_D1 = torch.optim.RMSprop(model_D1.parameters(), lr=args.lr_discr)
         elif args.optimizer == 'sgd':
             optimizer_D1 = torch.optim.SGD(model_D1.parameters(), lr=args.lr_discr, momentum=0.9, weight_decay=1e-4)
         elif args.optimizer == 'adam':
             optimizer_D1 = torch.optim.Adam(model_D1.parameters(), lr=args.lr_discr)
-        else:  # rmsprop
+        else:  
             print('not supported optimizer \n')
             return None
 
+
+    # Training on GTA using Fourier domain adaptation
     elif args.dataset == 'FDA':
         print('training on FDA')
         
+        # Cityscapes as target (using for both the dataloader GTA_CROPSIZE to align the images)
         transformations = ExtCompose([ExtResize(GTA_CROPSIZE), ExtToTensor()]) 
         target_dataset = CityScapes(root = initial_path + "/Cityscapes/Cityspaces", split = 'train',transforms=transformations)
 
+        # GTA5 as source
         transformations = ExtCompose([ExtResize(GTA_CROPSIZE), ExtToTensor()])
         source_dataset = GTA5(root = Path(initial_path), transforms=transformations)
         
+        # Cityscapes as validation
         transformations = ExtCompose([ExtToTensor()])
         val_dataset = CityScapes(root= initial_path + "/Cityscapes/Cityspaces", split='train',transforms=transformations)
     
@@ -174,6 +196,8 @@ def main():
                        num_workers=args.num_workers,
                        drop_last=False)
     
+
+    # Creating the model, with backbone STDC passed as argument
     model = BiSeNet(backbone=args.backbone, n_classes=n_classes, pretrain_model=args.pretrain_path, use_conv_last=args.use_conv_last)
     
     if torch.cuda.is_available() and args.use_gpu:
@@ -193,6 +217,8 @@ def main():
     
     start_epoch = 0
     
+    # If resume = true, take the last checkpoint saved in the validation phase, if dataset = DA
+    # also the discriminator must be resumed 
     if args.resume and args.dataset != 'DA':
         for check in os.listdir('./checkpoints'):
             if 'latest_' in check:
@@ -210,6 +236,7 @@ def main():
             optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             print("Loaded latest checkpoint")
 
+    # If dataset != DA just resume the model and the optimizer
     elif args.resume:
         for check in os.listdir('./checkpoints'):
             if 'latest_discr_' in check:
@@ -241,8 +268,10 @@ def main():
             writer = SummaryWriter(comment="_{}_{}_{}_{}".format(args.mode,args.dataset,args.batch_size,args.learning_rate))
             val(args, model, dataloader_val, writer=writer,epoch=0,step=0)
         case 'adapt':
+            # Adversarial domain adaptation
             train_and_adapt(args, model,model_D1, optimizer,optimizer_D1, dataloader_source,dataloader_target, dataloader_val,start_epoch, comment="_{}_{}_{}_{}".format(args.mode,args.dataset,args.batch_size,args.learning_rate))
         case 'improvements':
+            # Fourier Domain Adaptation
             print("L value is " + str(args.l))
             train_improvements(args, model, optimizer, dataloader_source, dataloader_target, dataloader_val,start_epoch, L=args.l, comment="_{}_{}_{}_{}".format(args.mode,args.dataset,args.batch_size,args.learning_rate))    
         case _:

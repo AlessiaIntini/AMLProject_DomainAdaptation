@@ -1,3 +1,7 @@
+#
+#   This file contains all the available options to run 
+#   the scripts
+#
 import argparse
 
 def str2bool(v):
