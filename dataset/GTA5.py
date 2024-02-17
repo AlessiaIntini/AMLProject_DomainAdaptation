@@ -72,9 +72,7 @@ class GTA5(torchDataset):
     label_map = GTA5Labels_TaskCV2017()
 
     train_id = np.array([c.train_id for c in CityScapes.classes])
-    #id_to_train_id = np.append(train_id, 255)
-    #print(id_to_train_id)
-
+    
     class PathPair_ImgAndLabel:
         IMG_DIR_NAME = "images"
         LBL_DIR_NAME = "labels"
@@ -96,7 +94,7 @@ class GTA5(torchDataset):
 
         def create_imgpath_list(self):
             img_dir = os.path.join(self.root, self.IMG_DIR_NAME)
-            #img_dir = os.path.join(self.root , self.IMG_DIR_NAME)
+            
             img_path = [os.path.join(img_dir, path) for path in os.listdir(img_dir) if path.endswith(self.SUFFIX)]
             return img_path
 
@@ -136,16 +134,9 @@ class GTA5(torchDataset):
         
         lbl = Image.fromarray(np.array(self.convert_from_id_to_trainId(lbl),dtype='uint8'))
 
-        #if self.labels_source == "GTA5":
-        #    lbl = Image.fromarray(np.array(self.convert_from_id_to_trainId(lbl),dtype='uint8')) 
-        #    #if not os.path.exists(lbl_path.split('.png')[0] + "_labelTrainIds.png"):
-        #    #    lbl.convert('L').save(lbl_path.split('.png')[0] + "_labelTrainIds.png")
-        #
         if self.transforms is not None:
             img, lbl = self.transforms(img, lbl)
-        #else:
-        #    img = ExtToTensor()(img)
-        #    lbl = ExtToTensor()(lbl)
+        
         return img, lbl
 
     @staticmethod
@@ -160,7 +151,7 @@ class GTA5(torchDataset):
 
     @staticmethod
     def _decode(lbl, label_map):
-        # remap_lbl = lbl[np.where(np.isin(lbl, cls.label_map.support_id_list), lbl, 0)]
+        
         color_lbl = np.zeros((*lbl.shape, 3))
         for label in label_map:
             color_lbl[lbl == label.TRAIN_ID] = label.color

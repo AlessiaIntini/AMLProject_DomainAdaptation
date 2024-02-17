@@ -54,11 +54,14 @@ class CityScapes(VisionDataset):
         CityscapesClass("license plate",        -1, 255, "vehicle", 7, False, True, (0, 0, 142)),
     ]
 
+    # Lists used for decoding and mapping
     train_id_to_color = [c.color for c in classes if (c.train_id != -1 and c.train_id != 255)]
     train_id_to_color.append([0, 0, 0])
     train_id_to_color = np.array(train_id_to_color)
     id_to_train_id = np.array([c.train_id for c in classes])
     id_to_color = np.array([c.color for c in classes])
+
+
     def __init__(
         self,
         root: str = "/content/Cityscapes/Cityspaces",
@@ -77,6 +80,8 @@ class CityScapes(VisionDataset):
         self.images = []
         self.targets = []
 
+        # Do Some checks
+        ##########################################################################################
         verify_str_arg(mode, "mode", ("fine", "coarse"))
         if mode == "fine":
             valid_modes = ("train", "test", "val")
@@ -92,7 +97,9 @@ class CityScapes(VisionDataset):
             verify_str_arg(value, "target_type", ("instance", "semantic", "polygon", "color" ))
             for value in self.target_type
         ]
+        ##########################################################################################
 
+        # Get the image, appending the path in a list
         for city in os.listdir(self.images_dir):
             img_dir = os.path.join(self.images_dir, city)
             target_dir = os.path.join(self.targets_dir, city)
@@ -110,17 +117,18 @@ class CityScapes(VisionDataset):
 
     def __getitem__(self, index: int) -> Tuple[Any, Any]:
 
+        # Open the images and apply the transformations
         image = Image.open(self.images[index]).convert("RGB")
         target = Image.open(self.targets[index][0])
+
         image , target = self.transforms(image,target)
-        #image = self.transforms(image)
-        #target = self.transforms(target)
-        #
+        
         return image, target
 
     def __len__(self) -> int:
         return len(self.images)
 
+    
     def _get_target_suffix(self, mode: str, target_type: str) -> str:
         if target_type == "instance":
             return f"{mode}_instanceIds.png"
@@ -134,9 +142,9 @@ class CityScapes(VisionDataset):
     @classmethod
     def decode(cls, target):
         target[target == 255] = 19
-        #target = target.astype('uint8') + 1
         return cls.train_id_to_color[target]
 
+    # A function to visualize the images
     @classmethod 
     def visualize_prediction(cls,outputs,labels) -> Tuple[Any, Any]:
         preds = outputs.max(1)[1].detach().cpu().numpy()
