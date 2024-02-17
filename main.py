@@ -50,6 +50,9 @@ def main():
         
         if args.augmentation:
             print("Performing data augmentation")
+            #GTA5 used as source and trasformations of data augmentation are used
+            #transformations = ExtCompose([ExtRandomCrop(GTA_CROPSIZE), ExtRandomHorizontalFlip(),ExtColorJitter(p=0.5,brightness=0.2,contrast= 0.3,saturation= 0.3,hue= 0.4), ExtGaussianBlur(), ExtToTensor()])
+            #best data augmentation configurations
             transformations = ExtCompose([ExtRandomCrop(GTA_CROPSIZE), ExtRandomHorizontalFlip(),ExtColorJitter(p=0.5, brightness=0.2, contrast=0.1, saturation=0.1, hue=0.2), ExtToTensor()])
             train_dataset_big = GTA5(root = Path(initial_path), transforms=transformations)
         else: 
@@ -89,9 +92,7 @@ def main():
         transformations = ExtCompose([ExtResize(GTA_CROPSIZE), ExtToTensor()]) 
         target_dataset = CityScapes(root = initial_path + "/Cityscapes/Cityspaces", split = 'train',transforms=transformations)
         
-        #GTA5 used as source and trasformations of data augmentation are used
-        #transformations = ExtCompose([ExtRandomCrop(GTA_CROPSIZE), ExtRandomHorizontalFlip(),ExtColorJitter(p=0.5,brightness=0.2,contrast= 0.3,saturation= 0.3,hue= 0.4), ExtGaussianBlur(), ExtToTensor()])
-        #best data augmentation configurations
+        
         transformations = ExtCompose([ExtRandomCrop(GTA_CROPSIZE), ExtRandomHorizontalFlip(),ExtColorJitter(p=0.5, brightness=0.2, contrast=0.1, saturation=0.1, hue=0.2), ExtToTensor()])
         source_dataset = GTA5(root = Path(initial_path), transforms=transformations)
         
