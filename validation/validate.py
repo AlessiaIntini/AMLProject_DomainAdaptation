@@ -3,7 +3,7 @@ from dataset.GTA5 import GTA5
 import torch
 import numpy as np
 from tensorboardX import SummaryWriter
-from utils import *
+from utils.utils import *
 import random
 
 #Validation function used to claculate the metrics on the test/validation dataset
@@ -40,15 +40,12 @@ def val(args, model, dataloader, writer = None , epoch = None, step = None):
                 elif args.dataset == 'GTA5':
                     colorized_predictions , colorized_labels = GTA5.visualize_prediction(predict, label)
                 
-                
-
+                # Save the images to tensorboard
                 writer.add_image('eval%d/iter%d/predicted_eval_labels' % (epoch, i), np.array(colorized_predictions), step, dataformats='HWC')
                 writer.add_image('eval%d/iter%d/correct_eval_labels' % (epoch, i), np.array(colorized_labels), step, dataformats='HWC')
                 writer.add_image('eval%d/iter%d/eval_original _data' % (epoch, i), np.array(data[0].cpu(),dtype='uint8'), step, dataformats='CHW')
 
                 
-
-
             predict = predict.squeeze(0)
             predict = reverse_one_hot(predict)
             predict = np.array(predict.cpu())

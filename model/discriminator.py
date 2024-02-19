@@ -5,6 +5,14 @@ import torch.nn.functional as F
 class FCDiscriminator(nn.Module):
 
 	def __init__(self, num_classes, ndf = 64):
+		"""
+		Args:
+			num_classes (int): Number of classes in the dataset
+			ndf (int): Number of filters in the first layer of the discriminator, value is 64 by default
+
+		returns:	
+			None
+		"""
 		super(FCDiscriminator, self).__init__()
 
 		self.conv1 = nn.Conv2d(num_classes, ndf, kernel_size=4, stride=2, padding=1)
@@ -14,8 +22,6 @@ class FCDiscriminator(nn.Module):
 		self.classifier = nn.Conv2d(ndf*8, 1, kernel_size=4, stride=2, padding=1)
 
 		self.leaky_relu = nn.LeakyReLU(negative_slope=0.2, inplace=True)
-		#self.up_sample = nn.Upsample(scale_factor=32, mode='bilinear')
-		#self.sigmoid = nn.Sigmoid()
 
 
 	def forward(self, x):
@@ -28,7 +34,5 @@ class FCDiscriminator(nn.Module):
 		x = self.conv4(x)
 		x = self.leaky_relu(x)
 		x = self.classifier(x)
-		#x = self.up_sample(x)
-		#x = self.sigmoid(x) 
 
 		return x

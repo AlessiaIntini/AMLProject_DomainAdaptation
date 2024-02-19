@@ -4,12 +4,29 @@ from collections import namedtuple
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from PIL import Image
-from utils import ExtResize, ExtToTensor, ExtTransforms , ExtCompose
+from utils.augUtils import *
 from torchvision.datasets.utils import iterable_to_str, verify_str_arg
 from torchvision.datasets.vision import VisionDataset
 import numpy as np
 
 class CityScapes(VisionDataset):
+
+    """Args:
+        root (string): Root directory of dataset 
+
+        split (string, optional): The image split to use, ``train``, ``test`` or ``val`` if mode="fine"
+            otherwise ``train``, ``train_extra`` or ``val``
+
+        mode (string, optional): The quality mode to use, ``fine`` or ``coarse``
+
+        target_type (string or list, optional): Type of target to use, ``instance``, ``semantic``, ``polygon``
+            or ``color``. Can also be a list to output a tuple with all specified target types.
+
+        target_transform (callable, optional): A function/transform that takes in the
+            target and transforms it.
+
+        transforms (callable, optional): A function/transform that takes input sample and its target as entry
+            and returns a transformed version."""
 
     CityscapesClass = namedtuple(
         "CityscapesClass",
@@ -116,6 +133,13 @@ class CityScapes(VisionDataset):
 
 
     def __getitem__(self, index: int) -> Tuple[Any, Any]:
+        """
+        Args:
+            index (int): Index
+        Returns:
+            tuple: (image, target) where target is a tuple of all target types if target_type is a list with more
+            than one item.
+        """
 
         # Open the images and apply the transformations
         image = Image.open(self.images[index]).convert("RGB")
@@ -144,9 +168,17 @@ class CityScapes(VisionDataset):
         target[target == 255] = 19
         return cls.train_id_to_color[target]
 
-    # A function to visualize the images
+    # this function is used to visualize the prediction images
     @classmethod 
     def visualize_prediction(cls,outputs,labels) -> Tuple[Any, Any]:
+        """
+        Args:
+                cls (CityScapes): The class object
+                outputs (Tensor): The output of the model
+                labels (Tensor): The ground truth labels
+        Returns:
+                Tuple[Any, Any]: The colorized predictions and the colorized labels
+        """
         preds = outputs.max(1)[1].detach().cpu().numpy()
         lab = labels.detach().cpu().numpy()
         colorized_preds = cls.decode(preds).astype('uint8') # To RGB images, (N, H, W, 3), ranged 0~255, numpy array

@@ -12,7 +12,11 @@ def str2bool(v):
     else:
         raise argparse.ArgumentTypeError('Unsupported value encountered.')
 
-
+"""
+    Configurations for command line to run the scripts
+    Example to run the script for training on Cityscapes:
+       python main.py --mode train --num_epochs 50 --validation_step 10 --batch_size 8 --num_workers 6  --optimizer sgd --resume True --dataset CityScapes --local True 
+"""
 def parse_args():
     parse = argparse.ArgumentParser()
 
@@ -20,6 +24,7 @@ def parse_args():
                        dest='mode',
                        type=str,
                        default='train',
+                       help='train, test, adapt,improvements'
     )
     parse.add_argument('--backbone',
                        dest='backbone',
@@ -37,7 +42,8 @@ def parse_args():
                        default=False,
     )
     parse.add_argument('--num_epochs',
-                       type=int, default=50,#300
+                        type=int,
+                        default=50,
                        help='Number of epochs to train for')
     parse.add_argument('--epoch_start_i',
                        type=int,
@@ -54,19 +60,19 @@ def parse_args():
     
     parse.add_argument('--batch_size',
                        type=int,
-                       default=8, #2
+                       default=8,
                        help='Number of images in each batch')
     parse.add_argument('--learning_rate',
                         type=float,
-                        default=0.01, #0.01
+                        default=0.01,
                         help='learning rate used for train')
     parse.add_argument('--num_workers',
                        type=int,
-                       default=2, #4
+                       default=6,
                        help='num of workers')
     parse.add_argument('--num_classes',
                        type=int,
-                       default=19,#19
+                       default=19,
                        help='num of object classes (with void)')
     parse.add_argument('--cuda',
                        type=str,
@@ -95,7 +101,7 @@ def parse_args():
     parse.add_argument('--dataset',
                           type=str,
                           default='CityScapes',
-                          help='CityScapes, GTA5, CROSS_DOMAIN, DA or FDA . Define on which dataset the model should be trained and evaluated.')
+                          help='CityScapes, GTA5, CROSS_DOMAIN, DA or FDA . Define on which dataset or different configuration the model should be trained and evaluated.')
     parse.add_argument('--resume_model_path',
                        type=str,
                        default='',
@@ -107,7 +113,7 @@ def parse_args():
     parse.add_argument('--augmentation',
                        type=str2bool,
                        default=False,
-                       help='Select if you want to perform some data augmentation')
+                       help='Select if you want to perform some data augmentation, it is a boolean value.')
     parse.add_argument('--best',
                        type=str2bool,
                        default=False,
@@ -119,7 +125,7 @@ def parse_args():
     parse.add_argument('--lr_discr',
                        type=float,
                        default=0.0003,
-                       help='Learning rate for the discriminator')
+                       help='Learning rate for the discriminator, in adversarial domain adaptation')
     parse.add_argument('--lambda_d1',
                        type=float,
                        default=0.002,
@@ -131,8 +137,7 @@ def parse_args():
     parse.add_argument("--switch2entropy", 
                        type=int, 
                        default=16, 
-                       help="switch to entropy after this many steps"
-    )
+                       help="switch to entropy after this many steps")
     parse.add_argument("--entW",
                         type=float, 
                         default=1.6e-6, 

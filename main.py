@@ -3,7 +3,8 @@ from model.discriminator import FCDiscriminator
 from dataset.cityscapes import CityScapes
 from dataset.GTA5 import GTA5
 import torchvision.transforms as transforms
-from utils import *
+from utils.utils import *
+from utils.augUtils import *
 import torch
 from torch.utils.data import DataLoader, Subset
 from options.option import parse_args
@@ -13,6 +14,8 @@ import os
 from pathlib import Path
 from sklearn.model_selection import train_test_split
 from training.train import *
+from training.trainADA import *
+from training.trainFDA import *
 from validation.validate import *
 
 CITYSCAPES_CROPSIZE = (512,1024)
@@ -89,6 +92,7 @@ def main():
 
     # Training on GTA5 and validating on Cityscapes
     elif args.dataset == 'CROSS_DOMAIN':
+        #For this section is possible also to use the training result on GTA5 and validate on Cityscapes
         print('training on CROSS_DOMAIN, training on GTA5 and validating on CityScapes')
         #Training on all GTA5 dataset
         transformations = ExtCompose([ExtResize(GTA_CROPSIZE), ExtToTensor()])
@@ -269,11 +273,11 @@ def main():
             val(args, model, dataloader_val, writer=writer,epoch=0,step=0)
         case 'adapt':
             # Adversarial domain adaptation
-            train_and_adapt(args, model,model_D1, optimizer,optimizer_D1, dataloader_source,dataloader_target, dataloader_val,start_epoch, comment="_{}_{}_{}_{}".format(args.mode,args.dataset,args.batch_size,args.learning_rate))
+            train_ADA(args, model,model_D1, optimizer,optimizer_D1, dataloader_source,dataloader_target, dataloader_val,start_epoch, comment="_{}_{}_{}_{}".format(args.mode,args.dataset,args.batch_size,args.learning_rate))
         case 'improvements':
             # Fourier Domain Adaptation
             print("L value is " + str(args.l))
-            train_improvements(args, model, optimizer, dataloader_source, dataloader_target, dataloader_val,start_epoch, L=args.l, comment="_{}_{}_{}_{}".format(args.mode,args.dataset,args.batch_size,args.learning_rate))    
+            train_FDA(args, model, optimizer, dataloader_source, dataloader_target, dataloader_val,start_epoch, L=args.l, comment="_{}_{}_{}_{}".format(args.mode,args.dataset,args.batch_size,args.learning_rate))    
         case _:
             print('not supported mode \n')
             return None
