@@ -7,7 +7,7 @@ import os
 from abc import ABCMeta
 from dataclasses import dataclass
 from typing import Tuple, Optional, Any
-from utils import ExtResize, ExtToTensor, ExtTransforms , ExtCompose
+from utils.augUtils import *
 from dataset.cityscapes import CityScapes
 class BaseGTALabels(metaclass=ABCMeta):
     pass
@@ -19,6 +19,9 @@ class GTA5Label:
 
 
 class GTA5Labels_TaskCV2017(BaseGTALabels):
+    """
+    the labels of the GTA5 dataset are the same of the CityScapes dataset
+    """
     road = GTA5Label(TRAIN_ID=0, color=(128, 64, 128))
     sidewalk = GTA5Label(TRAIN_ID=1, color=(244, 35, 232))
     building = GTA5Label(TRAIN_ID=2, color=(70, 70, 70))
@@ -69,12 +72,11 @@ class GTA5Labels_TaskCV2017(BaseGTALabels):
 
 
 class GTA5(torchDataset):
+
     label_map = GTA5Labels_TaskCV2017()
 
     train_id = np.array([c.train_id for c in CityScapes.classes])
-    #id_to_train_id = np.append(train_id, 255)
-    #print(id_to_train_id)
-
+    
     class PathPair_ImgAndLabel:
         IMG_DIR_NAME = "images"
         LBL_DIR_NAME = "labels"
@@ -96,7 +98,7 @@ class GTA5(torchDataset):
 
         def create_imgpath_list(self):
             img_dir = os.path.join(self.root, self.IMG_DIR_NAME)
-            #img_dir = os.path.join(self.root , self.IMG_DIR_NAME)
+            
             img_path = [os.path.join(img_dir, path) for path in os.listdir(img_dir) if path.endswith(self.SUFFIX)]
             return img_path
 
@@ -110,13 +112,15 @@ class GTA5(torchDataset):
 
     def __init__(self, 
                  root: Path,
-                 labels_source: str = "GTA5", # "cityscapes" or "GTA5"
-                 transforms:Optional[ExtTransforms]=None,
-                 split="train"):
+                 labels_source: str = "GTA5", 
+                 transforms:Optional[ExtTransforms]=None):
         """
+        Args: 
+            root (Path): The root directory of the dataset
 
-        :param root: (Path)
-            this is the directory path for GTA5 data
+            labels_source (str): The source of the labels "GTA5"
+
+            transforms (Optional[ExtTransforms]): The transformations to apply to the images and labels
         """
         self.root = os.path.join(root , 'GTA5')
         self.labels_source = labels_source
@@ -136,16 +140,9 @@ class GTA5(torchDataset):
         
         lbl = Image.fromarray(np.array(self.convert_from_id_to_trainId(lbl),dtype='uint8'))
 
-        #if self.labels_source == "GTA5":
-        #    lbl = Image.fromarray(np.array(self.convert_from_id_to_trainId(lbl),dtype='uint8')) 
-        #    #if not os.path.exists(lbl_path.split('.png')[0] + "_labelTrainIds.png"):
-        #    #    lbl.convert('L').save(lbl_path.split('.png')[0] + "_labelTrainIds.png")
-        #
         if self.transforms is not None:
             img, lbl = self.transforms(img, lbl)
-        #else:
-        #    img = ExtToTensor()(img)
-        #    lbl = ExtToTensor()(lbl)
+        
         return img, lbl
 
     @staticmethod
@@ -160,7 +157,7 @@ class GTA5(torchDataset):
 
     @staticmethod
     def _decode(lbl, label_map):
-        # remap_lbl = lbl[np.where(np.isin(lbl, cls.label_map.support_id_list), lbl, 0)]
+        
         color_lbl = np.zeros((*lbl.shape, 3))
         for label in label_map:
             color_lbl[lbl == label.TRAIN_ID] = label.color
@@ -171,6 +168,14 @@ class GTA5(torchDataset):
     
     @classmethod 
     def visualize_prediction(cls,outputs,labels) -> Tuple[Any, Any]:
+        """
+        Args:
+                cls (GTA5): The class object
+                outputs (Tensor): The output of the model
+                labels (Tensor): The ground truth labels
+        Returns:
+                Tuple[Any, Any]: The colorized predictions and the colorized labels
+        """
         preds = outputs.max(1)[1].detach().cpu().numpy()
         lab = labels.detach().cpu().numpy()
         colorized_preds = cls.decode(preds).astype('uint8') # To RGB images, (N, H, W, 3), ranged 0~255, numpy array
