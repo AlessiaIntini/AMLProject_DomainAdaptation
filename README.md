@@ -16,7 +16,7 @@ This repository contains the code of our project on real time domani adaptatio i
      * stdcnet
 * `options/`: contains all argument that it is possible pass to command line
     * option
-* `training`: contains different files of source code to perform train in different context
+* `training/`: contains different files of source code to perform train in different context
     * train: contains code to train Cityscapes, GTA5, Cross-Domain and Cross-Domain with Data Augmentation
     * traindADA: contains code to train Adversarial Domain Adaptation
     * trainFDA: contains code to train Fourier Domain Adaptation
@@ -28,6 +28,7 @@ This repository contains the code of our project on real time domani adaptatio i
     * validate
 * `Document_project3_s309895_s317748_s308807.pdf`: this document contains the main results of the experiments
 * `main.py`: in this file there is code to execute all possible experiments that have been implemented
+* `Paper_project3_s309895_s317748_s308807.pdf`: this document contain the paper on Real-time Domain Adaptation in Semantic Segmentation
 * `SemanticSegmentation.ipynb`: it is Jupiter Notebook to execute the code on colab
 
 ## Command to execute Real-time Domain Adaptation in Semantic Segmentation
